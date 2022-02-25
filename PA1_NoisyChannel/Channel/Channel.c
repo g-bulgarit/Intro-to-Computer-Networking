@@ -10,10 +10,24 @@
 
 #define MSG_SIZE 300
 
-int main() {
+int main(int argc, char* argv[]) {
 	printf("-------[NOISY CHANNEL]------- \r\n\r\n");
+	// Check for cmdline args
+	char* flag = "";
+	int noiseAmt = 0;
+
+	if (argc != 3) {
+		printf("[INFO] A noise function flag was not provided.\r\n\tDefaulting to no noise in transmission!.\r\n\t");
+		printf("To add random noise, use the -r <amount> , and for deterministic noise use -d <amount>.\r\n");
+	}
+	else {
+		flag = argv[1];
+		noiseAmt = atoi(argv[2]);
+	}
+
+
 	// Setup recv buffer
-	char recvBuf[2500];
+	char recvBuf[MSG_SIZE];
 
 	// Set up connection details
 	struct sockaddr_in sListen;
@@ -58,15 +72,19 @@ int main() {
 	// TODO: Test retcodes
 
 	printf("[Start] Started listening to the recieve socket, waiting for sender\r\n");
+	#ifdef DEBUG
+	printf("[DEBUG] Noise flag %s, param %d\r\n", flag, noiseAmt);
+	#endif
 
 	while (1) {
 		int c = sizeof(struct sockaddr_in);
 		SOCKET s = accept(listenSocket, (SOCKADDR*)&sListen, &c);
 		int recv_bytes = recv(s, recvBuf, MSG_SIZE, 0);
 		if (recv_bytes) {
-			printf("[Success] Recieved %d bytes\r\n", recv_bytes);
-			printf("[Success] Recieved: %s\r\n", recvBuf);
+			printf("[Success] Recieved %d bytes: %s\r\n", recv_bytes, recvBuf);
 		}
+
+		// Add noise to the buffered data here
 
 
 		// Connect to server socket
