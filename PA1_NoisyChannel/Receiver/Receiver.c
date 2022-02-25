@@ -5,10 +5,11 @@
 
 #pragma comment(lib, "ws2_32.lib") //Winsock Library
 
-#define DEFAULT_PORT 6003
+#define DEFAULT_PORT 6001
 #define MSG_SIZE 300
 
 int main() {
+	printf("-------[RECIEVER]------- \r\n\r\n");
 	// Setup recv buffer
 	char recvBuf[2500];
 
@@ -42,7 +43,7 @@ int main() {
 	int listen_retcode = listen(rxSocket, 1);
 	// TODO: Test retcodes
 
-	printf("[Start] Started socket for Reciever\r\n");
+	printf("[Start] Started socket, listening to connections from the noisy channel\r\n");
 
 	while (1) {
 		int c = sizeof(struct sockaddr_in);

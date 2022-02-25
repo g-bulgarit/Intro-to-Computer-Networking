@@ -5,10 +5,10 @@
 
 #pragma comment(lib, "ws2_32.lib") //Winsock Library
 
-#define DEFAULT_PORT 6003
+#define DEFAULT_PORT 6000
 
 int main() {
-
+	printf("-------[SENDER]------- \r\n\r\n");
 	// Set up connection details
 	struct sockaddr_in remote;
 	remote.sin_family = AF_INET;
@@ -35,9 +35,9 @@ int main() {
 
 	// Connect to server socket
 	int listen_retcode = connect(txSocket, (SOCKADDR*)&remote, sizeof(remote));
-	printf("[Start] Connected to Reciever\n");
+	printf("[Start] Connected to the Noisy Channel\r\n");
 
-	char msg[] = "Fuck tel aviv university";
+	char msg[] = "Fuck Tel-Aviv University!";
 	int sent_bytes = send(txSocket, msg, sizeof(msg), 0);
 	printf("[Success] Sent %d bytes\n", sent_bytes);
 
