@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
 			exit(0);
 		
 		// Check if the file exists and open it.
-		rfp = fopen(fileNameBuffer, "r");
+		rfp = fopen(fileNameBuffer, "rb");
 		if (rfp != NULL) {
 			size_t newLen = fread(fileContentBuffer, sizeof(char), MAX_FILE_CONTENT_BUFFER, rfp);
 			if (ferror(rfp) != 0) {

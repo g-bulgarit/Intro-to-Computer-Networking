@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
 			printf("[Success] Recieved: %s\r\n", recvBuf);
 		}
 
-		wfp = fopen("infile.txt", "w+");
+		wfp = fopen("infile.txt", "wb+");
 		fprintf(wfp, "%s", recvBuf);
 		fclose(wfp);
 
