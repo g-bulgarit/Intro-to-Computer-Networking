@@ -1,20 +1,25 @@
 #include <stdio.h>
-
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "winsock2.h"
-
 #pragma comment(lib, "ws2_32.lib") //Winsock Library
 
-#define DEFAULT_PORT 6000
-
-int main() {
+int main(int argc, char* argv[]) {
 	printf("-------[SENDER]------- \r\n\r\n");
+	// Check for cmdline args
+	if (argc != 3) {
+		printf("[ERR] Please provide all required command-line arguments.\r\n.\Sender.exe <ip_address> <port>\r\n");
+		exit(1);
+	}
+
 	// Set up connection details
 	struct sockaddr_in remote;
 	remote.sin_family = AF_INET;
-	remote.sin_port = htons(DEFAULT_PORT);
-	remote.sin_addr.s_addr = inet_addr("127.0.0.1");
+	remote.sin_port = htons(atoi(argv[2]));
+	remote.sin_addr.s_addr = inet_addr(argv[1]);
 
+	#ifdef DEBUG
+	printf("[DEBUG] Starting sender with IP %s and port %d\r\n", argv[1], remote.sin_port);
+	#endif
 
 	// initialize windows networking and check for errors.
 	WSADATA wsaData;

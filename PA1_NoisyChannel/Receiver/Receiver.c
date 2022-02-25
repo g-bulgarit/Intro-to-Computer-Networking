@@ -5,19 +5,23 @@
 
 #pragma comment(lib, "ws2_32.lib") //Winsock Library
 
-#define DEFAULT_PORT 6001
 #define MSG_SIZE 300
 
-int main() {
+int main(int argc, char* argv[]) {
 	printf("-------[RECIEVER]------- \r\n\r\n");
-	// Setup recv buffer
-	char recvBuf[2500];
+
+	// Check for cmdline args
+	if (argc != 3) {
+		printf("[ERR] Please provide all required command-line arguments.\r\n Reciever.exe <ip_address> <port>\r\n");
+		exit(1);
+	}
+
 
 	// Set up connection details
 	struct sockaddr_in server;
 	server.sin_family = AF_INET;
-	server.sin_port = htons(DEFAULT_PORT);
-	server.sin_addr.s_addr = inet_addr("127.0.0.1");
+	server.sin_port = htons(atoi(argv[2]));
+	server.sin_addr.s_addr = inet_addr(argv[1]);
 
 	struct sockaddr_in client;
 
@@ -43,6 +47,8 @@ int main() {
 	int listen_retcode = listen(rxSocket, 1);
 	// TODO: Test retcodes
 
+	// Setup recv buffer
+	char recvBuf[2500];
 	printf("[Start] Started socket, listening to connections from the noisy channel\r\n");
 
 	while (1) {
