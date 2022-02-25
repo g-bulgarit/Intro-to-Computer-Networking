@@ -1,13 +1,13 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "winsock2.h"
-
 #pragma comment(lib, "ws2_32.lib") //Winsock Library
 
-#define LISTEN_PORT 6000
-#define SEND_PORT 6001
+#define LISTEN_PORT		6000
+#define SEND_PORT		6001
+#define MSG_SIZE		500000
 #define DEBUG
-#define MSG_SIZE 500000
 
 void addDeterministicNoise(int n, char* buffer, int bufSize) {
 	for (int i = 0; i < bufSize; i++)
@@ -17,11 +17,14 @@ void addDeterministicNoise(int n, char* buffer, int bufSize) {
 }
 
 int main(int argc, char* argv[]) {
-	printf("-------[NOISY CHANNEL]------- \r\n\r\n");
 	// Check for cmdline args
 	char* flag = "";
 	int noiseAmt = 0;
 	int randomNoiseSeed = 0;
+	// User input
+	char userInputBuffer[5];
+
+	printf("-------[NOISY CHANNEL]------- \r\n\r\n");
 
 	if (argc <= 2) {
 		printf("[INFO] A noise function flag was not provided.\r\n\tDefaulting to no noise in transmission!.\r\n\t");
@@ -38,7 +41,7 @@ int main(int argc, char* argv[]) {
 	// Setup recv buffer
 	char recvBuf[MSG_SIZE];
 
-	// Set up connection details
+	// Set up connection detail structs
 	struct sockaddr_in sListen;
 	sListen.sin_family = AF_INET;
 	sListen.sin_port = htons(LISTEN_PORT);
@@ -66,8 +69,6 @@ int main(int argc, char* argv[]) {
 		printf("[ERR] Failed to create listening socket, error code %d\r\n", WSAGetLastError());
 		exit(1);
 	}
-
-
 
 	// Bind listen socket
 	int retcode = bind(listenSocket, (SOCKADDR*)&sListen, sizeof(sListen));
@@ -110,6 +111,12 @@ int main(int argc, char* argv[]) {
 		int sent_bytes = send(transmitSocket, recvBuf, sizeof(recvBuf), 0);
 		printf("[Success] Sent %d bytes\n", sent_bytes);
 		closesocket(transmitSocket);
+
+		printf(">: Continue? (yes/no)\r\n");
+		scanf("%s", &userInputBuffer);
+		if (!strcmp(userInputBuffer, "no")) {
+			exit(0);
+		}
 
 	}
 
