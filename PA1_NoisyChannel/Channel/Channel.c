@@ -7,7 +7,7 @@
 
 #define LISTEN_PORT 6000
 #define SEND_PORT 6001
-
+#define DEBUG
 #define MSG_SIZE 300
 
 int main(int argc, char* argv[]) {
@@ -15,14 +15,17 @@ int main(int argc, char* argv[]) {
 	// Check for cmdline args
 	char* flag = "";
 	int noiseAmt = 0;
+	int randomNoiseSeed = 0;
 
-	if (argc != 3) {
+	if (argc <= 2) {
 		printf("[INFO] A noise function flag was not provided.\r\n\tDefaulting to no noise in transmission!.\r\n\t");
-		printf("To add random noise, use the -r <amount> , and for deterministic noise use -d <amount>.\r\n");
+		printf("To add random noise, use the -r <probability> <seed>, and for deterministic noise use -d <amount>.\r\n");
 	}
 	else {
 		flag = argv[1];
 		noiseAmt = atoi(argv[2]);
+		if (argc == 4)
+			randomNoiseSeed = atoi(argv[3]);
 	}
 
 
@@ -73,7 +76,7 @@ int main(int argc, char* argv[]) {
 
 	printf("[Start] Started listening to the recieve socket, waiting for sender\r\n");
 	#ifdef DEBUG
-	printf("[DEBUG] Noise flag %s, param %d\r\n", flag, noiseAmt);
+	printf("[DEBUG] Noise flag %s, amt %d, seed %d\r\n", flag, noiseAmt, randomNoiseSeed);
 	#endif
 
 	while (1) {
