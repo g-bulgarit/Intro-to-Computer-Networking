@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <stdio.h>
 
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
@@ -8,6 +10,7 @@
 #define MSG_SIZE 3000
 
 int main(int argc, char* argv[]) {
+	FILE* wfp;
 	printf("-------[RECIEVER]------- \r\n\r\n");
 
 	// Check for cmdline args
@@ -59,6 +62,11 @@ int main(int argc, char* argv[]) {
 			printf("[Success] Recieved %d bytes\r\n", recv_bytes);
 			printf("[Success] Recieved: %s\r\n", recvBuf);
 		}
+
+		wfp = fopen("infile.txt", "w+");
+		fprintf(wfp, "%s", recvBuf);
+		fclose(wfp);
+
 	}
 
 	return 0;
