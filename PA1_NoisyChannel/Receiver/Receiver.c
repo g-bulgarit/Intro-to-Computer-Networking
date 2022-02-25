@@ -1,24 +1,21 @@
 #define _CRT_SECURE_NO_WARNINGS
-
 #include <stdio.h>
-
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "winsock2.h"
-
 #pragma comment(lib, "ws2_32.lib") //Winsock Library
 
 #define MSG_SIZE 500000
 
 int main(int argc, char* argv[]) {
 	FILE* wfp;
-	printf("-------[RECIEVER]------- \r\n\r\n");
+	char fileNameBuffer[3000];
 
+	printf("-------[RECIEVER]------- \r\n\r\n");
 	// Check for cmdline args
 	if (argc != 3) {
 		printf("[ERR] Please provide all required command-line arguments.\r\n Reciever.exe <ip_address> <port>\r\n");
 		exit(1);
 	}
-
 
 	// Set up connection details
 	struct sockaddr_in server;
@@ -60,10 +57,15 @@ int main(int argc, char* argv[]) {
 		int recv_bytes = recv(s, recvBuf, MSG_SIZE, 0);
 		if (recv_bytes) {
 			printf("[Success] Recieved %d bytes\r\n", recv_bytes);
-			printf("[Success] Recieved: %s\r\n", recvBuf);
+			printf("[Success] Recieved:\r\n%s\r\n", recvBuf);
 		}
 
-		wfp = fopen("infile.txt", "wb+");
+		// Decode the file here
+
+		// Save the file with the help of some user input
+		printf(">: Enter filename: ");
+		scanf("%s", &fileNameBuffer);
+		wfp = fopen(fileNameBuffer, "wb+");
 		fwrite(recvBuf, 1, MSG_SIZE, wfp);
 		fclose(wfp);
 		closesocket(s);
