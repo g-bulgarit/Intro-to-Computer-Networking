@@ -7,7 +7,14 @@
 #define LISTEN_PORT 6000
 #define SEND_PORT 6001
 #define DEBUG
-#define MSG_SIZE 8000
+#define MSG_SIZE 500000
+
+void addDeterministicNoise(int n, char* buffer, int bufSize) {
+	for (int i = 0; i < bufSize; i++)
+	{
+		buffer[i] ^= (0xFF & (1 << n));
+	}
+}
 
 int main(int argc, char* argv[]) {
 	printf("-------[NOISY CHANNEL]------- \r\n\r\n");
@@ -79,11 +86,16 @@ int main(int argc, char* argv[]) {
 		SOCKET s = accept(listenSocket, (SOCKADDR*)&sListen, &c);
 		int recv_bytes = recv(s, recvBuf, MSG_SIZE, 0);
 		if (recv_bytes) {
-			printf("\r\n>: Recieved %d bytes: %s\r\n", recv_bytes, recvBuf);
+			printf("\r\n>: Recieved %d bytes: \r\n%s\r\n", recv_bytes, recvBuf);
 		}
 		closesocket(s);
 
 		// Add noise to the buffered data here
+		if (!strcmp(flag, "-d")) {
+			addDeterministicNoise(noiseAmt, recvBuf, MSG_SIZE);
+			printf("\r\nAdded noise!\r\n");
+			printf("\r\n>After Noise: \r\n%s\r\n", recvBuf);
+		}
 
 
 		// Create actual IPv4 TCP socket for sending

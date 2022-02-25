@@ -3,7 +3,7 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "winsock2.h"
 #pragma comment(lib, "ws2_32.lib") //Winsock Library
-#define MAX_FILE_CONTENT_BUFFER 3000
+#define MAX_FILE_CONTENT_BUFFER 500000
 
 int main(int argc, char* argv[]) {
 	int stopUserInput = 0;
