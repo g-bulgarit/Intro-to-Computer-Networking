@@ -3,10 +3,13 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "winsock2.h"
 #pragma comment(lib, "ws2_32.lib") //Winsock Library
+#define MAX_FILE_CONTENT_BUFFER 3000
 
 int main(int argc, char* argv[]) {
 	int stopUserInput = 0;
 	char fileNameBuffer[3000];
+	char fileContentBuffer[MAX_FILE_CONTENT_BUFFER];
+	FILE* rfp;
 
 	printf("-------[SENDER]------- \r\n\r\n");
 
@@ -56,10 +59,22 @@ int main(int argc, char* argv[]) {
 
 		if (!strcmp(fileNameBuffer, "quit"))
 			exit(0);
-
+		
 		// Check if the file exists and open it.
+		rfp = fopen(fileNameBuffer, "r");
+		if (rfp != NULL) {
+			size_t newLen = fread(fileContentBuffer, sizeof(char), MAX_FILE_CONTENT_BUFFER, rfp);
+			if (ferror(rfp) != 0) {
+				fputs("Error reading file", stderr);
+			}
+			else {
+				fileContentBuffer[newLen++] = '\0'; /* Just to be safe. */
+			}
 
-;		int sent_bytes = send(txSocket, fileNameBuffer, sizeof(fileNameBuffer), 0);
+			fclose(rfp);
+		}
+
+;		int sent_bytes = send(txSocket, fileContentBuffer, sizeof(fileContentBuffer), 0);
 		printf(">: Sent: %d bytes\n", sent_bytes);
 
 	}

@@ -1,5 +1,4 @@
 #include <stdio.h>
-
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "winsock2.h"
 
@@ -8,7 +7,7 @@
 #define LISTEN_PORT 6000
 #define SEND_PORT 6001
 #define DEBUG
-#define MSG_SIZE 300
+#define MSG_SIZE 3000
 
 int main(int argc, char* argv[]) {
 	printf("-------[NOISY CHANNEL]------- \r\n\r\n");
@@ -84,7 +83,7 @@ int main(int argc, char* argv[]) {
 		SOCKET s = accept(listenSocket, (SOCKADDR*)&sListen, &c);
 		int recv_bytes = recv(s, recvBuf, MSG_SIZE, 0);
 		if (recv_bytes) {
-			printf("[Success] Recieved %d bytes: %s\r\n", recv_bytes, recvBuf);
+			printf("\r\n>: Recieved %d bytes: %s\r\n", recv_bytes, recvBuf);
 		}
 
 		// Add noise to the buffered data here

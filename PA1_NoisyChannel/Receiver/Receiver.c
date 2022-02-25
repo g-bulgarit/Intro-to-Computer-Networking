@@ -5,7 +5,7 @@
 
 #pragma comment(lib, "ws2_32.lib") //Winsock Library
 
-#define MSG_SIZE 300
+#define MSG_SIZE 3000
 
 int main(int argc, char* argv[]) {
 	printf("-------[RECIEVER]------- \r\n\r\n");
@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
 	// TODO: Test retcodes
 
 	// Setup recv buffer
-	char recvBuf[2500];
+	char recvBuf[3001];
 	printf("[Start] Started socket, listening to connections from the noisy channel\r\n");
 
 	while (1) {
