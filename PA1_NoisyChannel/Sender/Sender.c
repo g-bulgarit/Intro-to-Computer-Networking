@@ -1,13 +1,19 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "winsock2.h"
 #pragma comment(lib, "ws2_32.lib") //Winsock Library
 
 int main(int argc, char* argv[]) {
+	int stopUserInput = 0;
+	char fileNameBuffer[3000];
+
 	printf("-------[SENDER]------- \r\n\r\n");
+
+
 	// Check for cmdline args
 	if (argc != 3) {
-		printf("[ERR] Please provide all required command-line arguments.\r\n.\Sender.exe <ip_address> <port>\r\n");
+		printf("[ERR] Please provide all required command-line arguments.\r\n. Sender.exe <ip_address> <port>\r\n");
 		exit(1);
 	}
 
@@ -40,11 +46,23 @@ int main(int argc, char* argv[]) {
 
 	// Connect to server socket
 	int listen_retcode = connect(txSocket, (SOCKADDR*)&remote, sizeof(remote));
-	printf("[Start] Connected to the Noisy Channel\r\n");
 
-	char msg[] = "Fuck Tel-Aviv University!";
-	int sent_bytes = send(txSocket, msg, sizeof(msg), 0);
-	printf("[Success] Sent %d bytes\n", sent_bytes);
+#ifdef DEBUG
+	printf("[Start] Connected to the Noisy Channel\r\n");
+#endif
+	while (!stopUserInput) {
+		printf(">: Enter file name: ");
+		scanf("%s", &fileNameBuffer);
+
+		if (!strcmp(fileNameBuffer, "quit"))
+			exit(0);
+
+		// Check if the file exists and open it.
+
+;		int sent_bytes = send(txSocket, fileNameBuffer, sizeof(fileNameBuffer), 0);
+		printf(">: Sent: %d bytes\n", sent_bytes);
+
+	}
 
 	return 0;
 }
