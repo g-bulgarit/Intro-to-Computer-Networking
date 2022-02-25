@@ -40,20 +40,20 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 
-	// Create actual IPv4 TCP socket
-	if ((txSocket = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
-	{
-		printf("[ERR] Failed to create socket, error code %d", WSAGetLastError());
-		exit(1);
-	}
 
-	// Connect to server socket
-	int listen_retcode = connect(txSocket, (SOCKADDR*)&remote, sizeof(remote));
-
-#ifdef DEBUG
-	printf("[Start] Connected to the Noisy Channel\r\n");
-#endif
 	while (!stopUserInput) {
+		// Create actual IPv4 TCP socket
+		if ((txSocket = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
+		{
+			printf("[ERR] Failed to create socket, error code %d", WSAGetLastError());
+			exit(1);
+		}
+		// Connect to server socket
+		int listen_retcode = connect(txSocket, (SOCKADDR*)&remote, sizeof(remote));
+
+		#ifdef DEBUG
+			printf("[Start] Connected to the Noisy Channel\r\n");
+		#endif
 		printf(">: Enter file name: ");
 		scanf("%s", &fileNameBuffer);
 
@@ -74,8 +74,10 @@ int main(int argc, char* argv[]) {
 			fclose(rfp);
 		}
 
+		// Send the data through the socket
 ;		int sent_bytes = send(txSocket, fileContentBuffer, sizeof(fileContentBuffer), 0);
 		printf(">: Sent: %d bytes\n", sent_bytes);
+		closesocket(txSocket);
 
 	}
 

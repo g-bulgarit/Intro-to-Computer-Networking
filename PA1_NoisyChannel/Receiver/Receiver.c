@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
 		wfp = fopen("infile.txt", "wb+");
 		fprintf(wfp, "%s", recvBuf);
 		fclose(wfp);
-
+		closesocket(s);
 	}
 
 	return 0;
