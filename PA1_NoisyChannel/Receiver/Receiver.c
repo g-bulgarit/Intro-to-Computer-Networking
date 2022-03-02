@@ -48,15 +48,18 @@ int main(int argc, char* argv[]) {
 	// TODO: Test retcodes
 
 	// Setup recv buffer
-	char recvBuf[MSG_SIZE];
+	char* recvBuf = (char*)malloc(sizeof(char) * MSG_SIZE);
 	printf("[Start] Started socket, listening to connections from the noisy channel\r\n");
 
 	while (1) {
 		int c = sizeof(struct sockaddr_in);
 		SOCKET s = accept(rxSocket, (SOCKADDR*)&client, &c);
-		int recv_bytes = recv(s, recvBuf, MSG_SIZE, 0);
-		if (recv_bytes) {
-			printf("[Success] Recieved %d bytes\r\n", recv_bytes);
+		int recievedMessageSize = recv(s, recvBuf, MSG_SIZE, 0);
+		recvBuf = (char*)realloc(recvBuf, recievedMessageSize + 1);
+		recvBuf[recievedMessageSize + 1] = '\0';
+
+		if (recievedMessageSize) {
+			printf("[Success] Recieved %d bytes\r\n", recievedMessageSize);
 			printf("[Success] Recieved:\r\n%s\r\n", recvBuf);
 		}
 
@@ -66,7 +69,7 @@ int main(int argc, char* argv[]) {
 		printf(">: Enter filename: ");
 		scanf("%s", &fileNameBuffer);
 		wfp = fopen(fileNameBuffer, "wb+");
-		fwrite(recvBuf, 1, MSG_SIZE, wfp);
+		fwrite(recvBuf, 1, recievedMessageSize + 1, wfp);
 		fclose(wfp);
 		closesocket(s);
 	}

@@ -73,21 +73,31 @@ int main(int argc, char* argv[]) {
 	// Bind listen socket
 	int retcode = bind(listenSocket, (SOCKADDR*)&sListen, sizeof(sListen));
 	int canListen = listen(listenSocket, 1);
+		// TODO: Test retcodes here
 
 	while (1) {
 
-		// TODO: Test retcodes
 		printf("[Start] Started listening to the recieve socket, waiting for sender\r\n");
 	#ifdef DEBUG
 		printf("[DEBUG] Noise flag %s, amt %d, seed %d\r\n", flag, noiseAmt, randomNoiseSeed);
 	#endif
-
+		
+		// Allocate (too much) memory for message
+		char* recvBuf = (char*)malloc(sizeof(char) * MSG_SIZE);
+		if (recvBuf == NULL) {
+			printf("[ERR] Failed to allocate memory for recieving the message. Exiting");
+			exit(1);
+		}
 
 		int c = sizeof(struct sockaddr_in);
 		SOCKET s = accept(listenSocket, (SOCKADDR*)&sListen, &c);
-		int recv_bytes = recv(s, recvBuf, MSG_SIZE, 0);
-		if (recv_bytes) {
-			printf("\r\n>: Recieved %d bytes: \r\n%s\r\n", recv_bytes, recvBuf);
+		int recievedMessageSize = recv(s, recvBuf, MSG_SIZE, 0);
+
+		recvBuf = (char*)realloc(recvBuf, recievedMessageSize + 1);
+		recvBuf[recievedMessageSize + 1] = '\0';
+
+		if (recievedMessageSize) {
+			printf("\r\n>: Recieved %d bytes: \r\n%s\r\n", recievedMessageSize, recvBuf);
 		}
 		closesocket(s);
 
@@ -108,8 +118,8 @@ int main(int argc, char* argv[]) {
 		// Connect to server socket
 		int listen_retcode = connect(transmitSocket, (SOCKADDR*)&sSend, sizeof(sSend));
 		printf("[Success] Connected to reciever \r\n");
-		int sent_bytes = send(transmitSocket, recvBuf, sizeof(recvBuf), 0);
-		printf("[Success] Sent %d bytes\n", sent_bytes);
+		int sentMessageSize = send(transmitSocket, recvBuf, recievedMessageSize, 0);
+		printf("[Success] Sent %d bytes\n", sentMessageSize);
 		closesocket(transmitSocket);
 
 		printf(">: Continue? (yes/no)\r\n");

@@ -8,11 +8,14 @@
 int main(int argc, char* argv[]) {
 	int stopUserInput = 0;
 	char fileNameBuffer[3000];
-	char fileContentBuffer[MAX_FILE_CONTENT_BUFFER];
+
+	char* fileContentBuffer;
+
 	FILE* rfp;
 
+#ifdef DEBUG
 	printf("-------[SENDER]------- \r\n\r\n");
-
+#endif
 
 	// Check for cmdline args
 	if (argc != 3) {
@@ -62,23 +65,36 @@ int main(int argc, char* argv[]) {
 		
 		// Check if the file exists and open it.
 		rfp = fopen(fileNameBuffer, "rb");
+
+		// Get file size: taken partly from https://codereview.stackexchange.com/questions/112613/memory-safe-file-reading-in-c
+		fseek(rfp, 0, SEEK_END); // get offset at end of file
+		int fileSize = ftell(rfp); // Get size
+		rewind(rfp, 0, SEEK_SET); // seek back to beginning
+		fileContentBuffer = (char*)malloc(sizeof(char) * (fileSize + 1)); // allocate enough memory in bytes.
+
+
 		if (rfp != NULL) {
-			size_t newLen = fread(fileContentBuffer, sizeof(char), MAX_FILE_CONTENT_BUFFER, rfp);
+			size_t newLen = fread(fileContentBuffer, sizeof(char), fileSize, rfp);
 			if (ferror(rfp) != 0) {
-				fputs("Error reading file", stderr);
+				printf("[ERR] Error reading input file, make sure the path is correct. Exiting.");
+				exit(1);
 			}
 			else {
-				fileContentBuffer[newLen++] = '\0'; /* Just to be safe. */
+				fileContentBuffer[newLen++] = '\0';
 			}
-
 			fclose(rfp);
+		}
+		else {
+			printf("[ERR] Failed to allocate enough memory for reading the file.\r\nExiting.");
+			exit(1);
 		}
 
 		// Send the data through the socket
-;		int sent_bytes = send(txSocket, fileContentBuffer, sizeof(fileContentBuffer), 0);
+		int sent_bytes = send(txSocket, fileContentBuffer, fileSize, 0);
 		printf(">: Sent: %d bytes\n", sent_bytes);
+		
+		free(fileContentBuffer); // Free used memory
 		closesocket(txSocket);
-
 	}
 
 	return 0;
