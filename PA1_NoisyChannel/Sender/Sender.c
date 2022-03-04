@@ -3,13 +3,46 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "winsock2.h"
 #pragma comment(lib, "ws2_32.lib") //Winsock Library
-#define MAX_FILE_CONTENT_BUFFER 500000
+
+
+void setBit(char* buffer, int bufferSize, int index, int value) {
+
+	// Get to specific byte, calculate bit offset
+	printf("%u, ", *buffer);
+	buffer[index / bufferSize] &= ~(1u << (8 - index));
+	// Set the bit
+	if (value == 1) {
+		buffer[index / bufferSize] |= (value << (8 - index));
+	}
+	printf("%u\r\n", *buffer);
+
+}
+
+void hamming(char* originalFileBuffer, char* encodedFileBuffer, int originalFileLength) {
+
+	for (int blockNumber = 0; blockNumber < originalFileLength; blockNumber += 26)
+	{
+		// Do calculation for first byte
+		
+		// Do calculation for second byte
+		// last
+		encodedFileBuffer[4];
+
+	}
+
+}
 
 int main(int argc, char* argv[]) {
 	int stopUserInput = 0;
 	char fileNameBuffer[3000];
 
 	char* fileContentBuffer;
+
+	// Test
+	char buf = 38;
+	setBit(&buf, 728, 2, 1);
+	setBit(&buf, 728, 2, 0);
+
 
 	FILE* rfp;
 
@@ -68,9 +101,9 @@ int main(int argc, char* argv[]) {
 
 		// Get file size: taken partly from https://codereview.stackexchange.com/questions/112613/memory-safe-file-reading-in-c
 		fseek(rfp, 0, SEEK_END); // get offset at end of file
-		int fileSize = ftell(rfp); // Get size
+		int fileSize = ftell(rfp) + 1; // Get size
 		rewind(rfp, 0, SEEK_SET); // seek back to beginning
-		fileContentBuffer = (char*)malloc(sizeof(char) * (fileSize + 1)); // allocate enough memory in bytes.
+		fileContentBuffer = (char*)malloc(sizeof(char) * (fileSize)); // allocate enough memory in bytes.
 
 
 		if (rfp != NULL) {
@@ -88,6 +121,16 @@ int main(int argc, char* argv[]) {
 			printf("[ERR] Failed to allocate enough memory for reading the file.\r\nExiting.");
 			exit(1);
 		}
+		
+		// Encode with hamming(31,26,3)
+		int encodedFileSize = (int) (fileSize - 1) * (31.0 / 26.0);
+		char* encodedFileBuffer = (char*)malloc(sizeof(char) * (encodedFileSize)); // allocate enough memory in bytes.
+		if (encodedFileBuffer == NULL) {
+			exit(1);
+			// todo print
+		}
+
+		hamming(fileContentBuffer, encodedFileBuffer, fileSize);
 
 		// Send the data through the socket
 		int sent_bytes = send(txSocket, fileContentBuffer, fileSize, 0);
