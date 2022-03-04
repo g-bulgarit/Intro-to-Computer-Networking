@@ -10,11 +10,16 @@ void setBit(char* buffer, int bufferSize, int index, int value) {
 	// Get to specific byte, calculate bit offset
 	printf("%u, ", *buffer);
 	buffer[index / bufferSize] &= ~(1u << (8 - index));
+	
+	buffer[index / bufferSize] &= ~(1u << (8 - (index % bufferSize)));
 	// Set the bit
 	if (value == 1) {
 		buffer[index / bufferSize] |= (value << (8 - index));
+		buffer[index / bufferSize] |= (value << (8 - (index % bufferSize)));
 	}
 	printf("%u\r\n", *buffer);
+	
+	//printf("%u\r\n", *buffer);
 
 }
 
