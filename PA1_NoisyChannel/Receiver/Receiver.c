@@ -6,6 +6,72 @@
 
 #define MSG_SIZE 500000
 
+
+void setBit(char* buffer, int bufferSize, int index, int value) {
+	// Set specific bit in buffer
+
+	buffer[index / bufferSize] &= ~(1u << (7 - (index % bufferSize))); // This sets the bit to be 0
+	// Set the bit to 1 if needed
+	if (value == 1) {
+		buffer[index / bufferSize] |= (value << (7 - (index % bufferSize)));
+	}
+}
+
+int getBit(char* buffer, int bufferSize, int index) {
+	// Set specific bit from buffer
+	int bit = (buffer[index / bufferSize] >> (7 - (index % bufferSize))) & 1;
+
+	//int bit = buffer[index / bufferSize] &= ~(1u << (8 - (index % bufferSize)));
+	return bit;
+
+}
+
+void unhamming(char* recievedMessageBuffer, char* decodedFileBuffer, int messageLength) {
+	// Bits are numbered from 0 to 30 in each block.
+	// The control bits are:
+	//		0, 1, 3, 7, 15
+	// The data bits are:
+	//		2, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30
+
+	for (int blockNumber = 0; blockNumber < messageLength; blockNumber += 31)
+	{
+		// Set data bits to correct places in the encoded file buffer
+		setBit(decodedFileBuffer, 8, 0 + blockNumber, getBit(recievedMessageBuffer, 8, 2 + blockNumber));			// Original: 0		Encoded: 2
+
+		setBit(decodedFileBuffer, 8, 1 + blockNumber, getBit(recievedMessageBuffer, 8, 4 + blockNumber));				// Original: 1		Encoded: 4
+		setBit(decodedFileBuffer, 8, 2 + blockNumber, getBit(recievedMessageBuffer, 8, 5 + blockNumber));				// Original: 2		Encoded: 5
+		setBit(decodedFileBuffer, 8, 3 + blockNumber, getBit(recievedMessageBuffer, 8, 6 + blockNumber));				// Original: 3		Encoded: 6
+
+		setBit(decodedFileBuffer, 8, 4 + blockNumber, getBit(recievedMessageBuffer, 8, 8 + blockNumber));				// Original: 4		Encoded: 8
+		setBit(decodedFileBuffer, 8, 5 + blockNumber, getBit(recievedMessageBuffer, 8, 9 + blockNumber));				// Original: 5		Encoded: 9
+		setBit(decodedFileBuffer, 8, 6 + blockNumber, getBit(recievedMessageBuffer, 8, 10 + blockNumber));				// Original: 6		Encoded: 10
+		setBit(decodedFileBuffer, 8, 7 + blockNumber, getBit(recievedMessageBuffer, 8, 11 + blockNumber));				// Original: 7		Encoded: 11
+		setBit(decodedFileBuffer, 8, 8 + blockNumber, getBit(recievedMessageBuffer, 8, 12 + blockNumber));				// Original: 8		Encoded: 12
+		setBit(decodedFileBuffer, 8, 9 + blockNumber, getBit(recievedMessageBuffer, 8, 13 + blockNumber));				// Original: 9		Encoded: 13
+		setBit(decodedFileBuffer, 8, 10 + blockNumber, getBit(recievedMessageBuffer, 8, 14 + blockNumber));			// Original: 10		Encoded: 14
+
+		setBit(decodedFileBuffer, 8, 11 + blockNumber, getBit(recievedMessageBuffer, 8, 16 + blockNumber));			// Original: 11		Encoded: 16
+		setBit(decodedFileBuffer, 8, 12 + blockNumber, getBit(recievedMessageBuffer, 8, 17 + blockNumber));			// Original: 12		Encoded: 17
+		setBit(decodedFileBuffer, 8, 13 + blockNumber, getBit(recievedMessageBuffer, 8, 18 + blockNumber));			// Original: 13		Encoded: 18
+		setBit(decodedFileBuffer, 8, 14 + blockNumber, getBit(recievedMessageBuffer, 8, 19 + blockNumber));			// Original: 14		Encoded: 19
+		setBit(decodedFileBuffer, 8, 15 + blockNumber, getBit(recievedMessageBuffer, 8, 20 + blockNumber));			// Original: 15		Encoded: 20
+		setBit(decodedFileBuffer, 8, 16 + blockNumber, getBit(recievedMessageBuffer, 8, 21 + blockNumber));			// Original: 16		Encoded: 21
+		setBit(decodedFileBuffer, 8, 17 + blockNumber, getBit(recievedMessageBuffer, 8, 22 + blockNumber));			// Original: 17		Encoded: 22
+		setBit(decodedFileBuffer, 8, 18 + blockNumber, getBit(recievedMessageBuffer, 8, 23 + blockNumber));			// Original: 18		Encoded: 23
+		setBit(decodedFileBuffer, 8, 19 + blockNumber, getBit(recievedMessageBuffer, 8, 24 + blockNumber));			// Original: 19		Encoded: 24
+		setBit(decodedFileBuffer, 8, 20 + blockNumber, getBit(recievedMessageBuffer, 8, 25 + blockNumber));			// Original: 20		Encoded: 25
+		setBit(decodedFileBuffer, 8, 21 + blockNumber, getBit(recievedMessageBuffer, 8, 26 + blockNumber));			// Original: 21		Encoded: 26
+		setBit(decodedFileBuffer, 8, 22 + blockNumber, getBit(recievedMessageBuffer, 8, 27 + blockNumber));			// Original: 22		Encoded: 27
+		setBit(decodedFileBuffer, 8, 23 + blockNumber, getBit(recievedMessageBuffer, 8, 28 + blockNumber));			// Original: 23		Encoded: 28
+		setBit(decodedFileBuffer, 8, 24 + blockNumber, getBit(recievedMessageBuffer, 8, 29 + blockNumber));			// Original: 24		Encoded: 29
+		setBit(decodedFileBuffer, 8, 25 + blockNumber, getBit(recievedMessageBuffer, 8, 30 + blockNumber));			// Original: 25		Encoded: 30
+		printf("[!] Finished working on block %d out of %d\r\n", blockNumber / 31, messageLength / 31);
+
+	}
+
+}
+
+
 int main(int argc, char* argv[]) {
 	FILE* wfp;
 	char fileNameBuffer[3000];
@@ -64,6 +130,18 @@ int main(int argc, char* argv[]) {
 		}
 
 		// Decode the file here
+		int decodedFileSize = recievedMessageSize * (26.0 / 31.0);
+		char* decodedFileBuffer = (char*)malloc(sizeof(char) * decodedFileSize);
+		if (decodedFileBuffer == NULL) {
+			exit(1);
+			// todo print
+		}
+		// Set entire buffer to 0.
+		memset(decodedFileBuffer, 0, sizeof(char) * decodedFileSize);
+
+		unhamming(recvBuf, decodedFileBuffer, recievedMessageSize);
+		printf("[Decode] Decoded %d bytes\r\n", decodedFileSize);
+		printf("[Decode] Decoded:\r\n%s\r\n", decodedFileBuffer);
 
 		// Save the file with the help of some user input
 		printf(">: Enter filename: ");
