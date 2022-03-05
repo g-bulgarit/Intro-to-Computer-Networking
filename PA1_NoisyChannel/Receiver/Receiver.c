@@ -153,7 +153,7 @@ int main(int argc, char* argv[]) {
 		printf(">: Enter filename: ");
 		scanf("%s", &fileNameBuffer);
 		wfp = fopen(fileNameBuffer, "wb+");
-		fwrite(recvBuf, 1, recievedMessageSize + 1, wfp);
+		fwrite(decodedFileBuffer, 1, decodedFileSize, wfp);
 		fclose(wfp);
 		closesocket(s);
 	}
