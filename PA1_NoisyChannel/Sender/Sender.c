@@ -24,6 +24,15 @@ int getBit(char* buffer, int index) {
 	return bit;
 }
 
+void setControlBit(char* encodingBuffer, int blockOffset, int encodingOffset, int* bitPositions, int arrayLength, int bitToSet) {
+	int controlBit = 0;
+	for (int i = 0; i < arrayLength; i++)
+	{
+		controlBit ^= getBit(encodingBuffer, bitPositions[i] + blockOffset);
+	}
+	setBit(encodingBuffer, bitToSet + encodingOffset, controlBit);
+}
+
 void hamming(char* originalFileBuffer, char* encodedFileBuffer, int originalFileLength) {
 	// Encode message with hamming code to allow single bit error correction or two-bit error detection.
 
@@ -68,20 +77,20 @@ void hamming(char* originalFileBuffer, char* encodedFileBuffer, int originalFile
 		setBit(encodedFileBuffer, 30 + encodedBlockNumber, getBit(originalFileBuffer, 25 + blockNumber));			// Original: 25		Encoded: 30
 
 		// Calculate control bits (TODO):
-		int controlBit0 = 1;
-		int controlBit1 = 1;
-		int controlBit2 = 1;
-		int controlBit3 = 1;
-		int controlBit4 = 1;
+		int controlBit0_Bits[] =	{ 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30 };
+		int controlBit1_Bits[] =	{ 1, 2, 5, 6, 9, 10, 13, 14, 17, 18, 21, 22, 25, 26, 29, 30 };
+		int controlBit3_Bits[] =	{ 3, 4, 5, 6, 11, 12, 13, 14, 19, 20, 21, 22, 27, 28, 29, 30 };
+		int controlBit7_Bits[] =	{ 7, 8, 9, 10, 11, 12, 13, 14, 23, 24, 25, 26, 27, 28, 29, 30 };
+		int controlBit15_Bits[] =	{ 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
 
-		// Set control bits
-		setBit(encodedFileBuffer, 0 + encodedBlockNumber, controlBit0);												// Original: CB0	Encoded: 0
-		setBit(encodedFileBuffer, 1 + encodedBlockNumber, controlBit1);												// Original: CB1	Encoded: 1
-		setBit(encodedFileBuffer, 3 + encodedBlockNumber, controlBit2);												// Original: CB2	Encoded: 3
-		setBit(encodedFileBuffer, 7 + encodedBlockNumber, controlBit3);												// Original: CB3	Encoded: 7
-		setBit(encodedFileBuffer, 15 + encodedBlockNumber, controlBit4);											// Original: CB4	Encoded: 15
+		setControlBit(encodedFileBuffer, blockNumber, encodedBlockNumber, controlBit0_Bits, 16, 0);	 // Set 0-th control bit		(1)
+		setControlBit(encodedFileBuffer, blockNumber, encodedBlockNumber, controlBit1_Bits, 16, 1);								// Set 1-st control bit		(2)
+		setControlBit(encodedFileBuffer, blockNumber, encodedBlockNumber, controlBit3_Bits, 16, 3);								// Set 3-rd control bit		(4)
+		setControlBit(encodedFileBuffer, blockNumber, encodedBlockNumber, controlBit7_Bits, 16, 7);								// Set 7-th control bit		(8)
+		setControlBit(encodedFileBuffer, blockNumber, encodedBlockNumber, controlBit15_Bits, 16, 15);							// Set 15-th control bit	(16)
+
 #ifdef DEBUG
-		printf("[!] Finished working on block %d out of %d\r\n", blockNumber / 26, originalFileLength * BYTE_SIZE_IN_BITS / 26);
+		printf("[!] Finished working on 26-bit block %d out of %d\r\n", blockNumber / 26, originalFileLength * BYTE_SIZE_IN_BITS / 26);
 #endif
 		encodedBlockNumber += 31;
 	}
@@ -111,9 +120,9 @@ int main(int argc, char* argv[]) {
 	remote.sin_port = htons(atoi(argv[2]));
 	remote.sin_addr.s_addr = inet_addr(argv[1]);
 
-	#ifdef DEBUG
+#ifdef DEBUG
 	printf("[DEBUG] Starting sender with IP %s and port %d\r\n", argv[1], remote.sin_port);
-	#endif
+#endif
 
 	// initialize windows networking and check for errors.
 	WSADATA wsaData;
@@ -127,6 +136,7 @@ int main(int argc, char* argv[]) {
 
 
 	while (!stopUserInput) {
+		printf("TEST");
 		// Create actual IPv4 TCP socket
 		if ((txSocket = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
 		{
@@ -136,21 +146,21 @@ int main(int argc, char* argv[]) {
 		// Connect to server socket
 		int listen_retcode = connect(txSocket, (SOCKADDR*)&remote, sizeof(remote));
 
-		#ifdef DEBUG
-			printf("[Start] Connected to the Noisy Channel\r\n");
-		#endif
+#ifdef DEBUG
+		printf("[Start] Connected to the Noisy Channel\r\n");
+#endif
 		printf(">: Enter file name: ");
 		scanf("%s", &fileNameBuffer);
 
 		if (!strcmp(fileNameBuffer, "quit"))
 			exit(0);
-		
+
 		// Check if the file exists and open it.
 		rfp = fopen(fileNameBuffer, "rb");
 
 		// Get file size: taken partly from https://codereview.stackexchange.com/questions/112613/memory-safe-file-reading-in-c
 		fseek(rfp, 0, SEEK_END); // get offset at end of file
-		int fileSize = ftell(rfp) + 1; // Get size
+		int fileSize = ftell(rfp); // Get size
 		rewind(rfp, 0, SEEK_SET); // seek back to beginning
 		fileContentBuffer = (char*)malloc(sizeof(char) * (fileSize)); // allocate enough memory in bytes.
 
@@ -171,9 +181,9 @@ int main(int argc, char* argv[]) {
 			printf("[ERR] Failed to allocate enough memory for reading the file.\r\nExiting.");
 			exit(1);
 		}
-		
+
 		// Encode with hamming(31,26,3)
-		int encodedFileSize = (int) (fileSize - 1) * (31.0 / 26.0);
+		int encodedFileSize = (int)(fileSize) * (31.0 / 26.0);
 		char* encodedFileBuffer = (char*)malloc(sizeof(char) * (encodedFileSize)); // allocate enough memory in bytes.
 		if (encodedFileBuffer == NULL) {
 			printf("[ERR] Failed to allocate enough memory for the encoded file buffer.\r\nExiting.");
@@ -185,8 +195,8 @@ int main(int argc, char* argv[]) {
 		// Send the data through the socket
 		int sent_bytes = send(txSocket, encodedFileBuffer, encodedFileSize, 0);
 		printf(">: Sent: %d bytes\n", sent_bytes);
-		
-		free(fileContentBuffer); // Free used memory
+
+		free(encodedFileBuffer); // Free used memory
 		closesocket(txSocket);
 	}
 
