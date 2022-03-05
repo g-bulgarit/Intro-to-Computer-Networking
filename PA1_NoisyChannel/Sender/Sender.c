@@ -31,38 +31,39 @@ void hamming(char* originalFileBuffer, char* encodedFileBuffer, int originalFile
 	// The data bits are:
 	//		2, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30
 
-	for (int blockNumber = 0; blockNumber < originalFileLength; blockNumber += 26)
+	int encodedBlockNumber = 0;
+	for (int blockNumber = 0; blockNumber < originalFileLength * 8; blockNumber += 26)
 	{
 		// Set data bits to correct places in the encoded file buffer
-		setBit(encodedFileBuffer, 8, 2 + blockNumber, getBit(originalFileBuffer, 8, 0 + blockNumber));				// Original: 0		Encoded: 2
+		setBit(encodedFileBuffer, 8, 2 + encodedBlockNumber, getBit(originalFileBuffer, 8, 0 + blockNumber));				// Original: 0		Encoded: 2
 
-		setBit(encodedFileBuffer, 8, 4 + blockNumber, getBit(originalFileBuffer, 8, 1 + blockNumber));				// Original: 1		Encoded: 4
-		setBit(encodedFileBuffer, 8, 5 + blockNumber, getBit(originalFileBuffer, 8, 2 + blockNumber));				// Original: 2		Encoded: 5
-		setBit(encodedFileBuffer, 8, 6 + blockNumber, getBit(originalFileBuffer, 8, 3 + blockNumber));				// Original: 3		Encoded: 6
+		setBit(encodedFileBuffer, 8, 4 + encodedBlockNumber, getBit(originalFileBuffer, 8, 1 + blockNumber));				// Original: 1		Encoded: 4
+		setBit(encodedFileBuffer, 8, 5 + encodedBlockNumber, getBit(originalFileBuffer, 8, 2 + blockNumber));				// Original: 2		Encoded: 5
+		setBit(encodedFileBuffer, 8, 6 + encodedBlockNumber, getBit(originalFileBuffer, 8, 3 + blockNumber));				// Original: 3		Encoded: 6
 
-		setBit(encodedFileBuffer, 8, 8 + blockNumber, getBit(originalFileBuffer, 8, 4 + blockNumber));				// Original: 4		Encoded: 8
-		setBit(encodedFileBuffer, 8, 9 + blockNumber, getBit(originalFileBuffer, 8, 5 + blockNumber));				// Original: 5		Encoded: 9
-		setBit(encodedFileBuffer, 8, 10 + blockNumber, getBit(originalFileBuffer, 8, 6 + blockNumber));				// Original: 6		Encoded: 10
-		setBit(encodedFileBuffer, 8, 11 + blockNumber, getBit(originalFileBuffer, 8, 7 + blockNumber));				// Original: 7		Encoded: 11
-		setBit(encodedFileBuffer, 8, 12 + blockNumber, getBit(originalFileBuffer, 8, 8 + blockNumber));				// Original: 8		Encoded: 12
-		setBit(encodedFileBuffer, 8, 13 + blockNumber, getBit(originalFileBuffer, 8, 9 + blockNumber));				// Original: 9		Encoded: 13
-		setBit(encodedFileBuffer, 8, 14 + blockNumber, getBit(originalFileBuffer, 8, 10 + blockNumber));			// Original: 10		Encoded: 14
+		setBit(encodedFileBuffer, 8, 8 + encodedBlockNumber, getBit(originalFileBuffer, 8, 4 + blockNumber));				// Original: 4		Encoded: 8
+		setBit(encodedFileBuffer, 8, 9 + encodedBlockNumber, getBit(originalFileBuffer, 8, 5 + blockNumber));				// Original: 5		Encoded: 9
+		setBit(encodedFileBuffer, 8, 10 + encodedBlockNumber, getBit(originalFileBuffer, 8, 6 + blockNumber));				// Original: 6		Encoded: 10
+		setBit(encodedFileBuffer, 8, 11 + encodedBlockNumber, getBit(originalFileBuffer, 8, 7 + blockNumber));				// Original: 7		Encoded: 11
+		setBit(encodedFileBuffer, 8, 12 + encodedBlockNumber, getBit(originalFileBuffer, 8, 8 + blockNumber));				// Original: 8		Encoded: 12
+		setBit(encodedFileBuffer, 8, 13 + encodedBlockNumber, getBit(originalFileBuffer, 8, 9 + blockNumber));				// Original: 9		Encoded: 13
+		setBit(encodedFileBuffer, 8, 14 + encodedBlockNumber, getBit(originalFileBuffer, 8, 10 + blockNumber));			// Original: 10		Encoded: 14
 
-		setBit(encodedFileBuffer, 8, 16 + blockNumber, getBit(originalFileBuffer, 8, 11 + blockNumber));			// Original: 11		Encoded: 16
-		setBit(encodedFileBuffer, 8, 17 + blockNumber, getBit(originalFileBuffer, 8, 12 + blockNumber));			// Original: 12		Encoded: 17
-		setBit(encodedFileBuffer, 8, 18 + blockNumber, getBit(originalFileBuffer, 8, 13 + blockNumber));			// Original: 13		Encoded: 18
-		setBit(encodedFileBuffer, 8, 19 + blockNumber, getBit(originalFileBuffer, 8, 14 + blockNumber));			// Original: 14		Encoded: 19
-		setBit(encodedFileBuffer, 8, 20 + blockNumber, getBit(originalFileBuffer, 8, 15 + blockNumber));			// Original: 15		Encoded: 20
-		setBit(encodedFileBuffer, 8, 21 + blockNumber, getBit(originalFileBuffer, 8, 16 + blockNumber));			// Original: 16		Encoded: 21
-		setBit(encodedFileBuffer, 8, 22 + blockNumber, getBit(originalFileBuffer, 8, 17 + blockNumber));			// Original: 17		Encoded: 22
-		setBit(encodedFileBuffer, 8, 23 + blockNumber, getBit(originalFileBuffer, 8, 18 + blockNumber));			// Original: 18		Encoded: 23
-		setBit(encodedFileBuffer, 8, 24 + blockNumber, getBit(originalFileBuffer, 8, 19 + blockNumber));			// Original: 19		Encoded: 24
-		setBit(encodedFileBuffer, 8, 25 + blockNumber, getBit(originalFileBuffer, 8, 20 + blockNumber));			// Original: 20		Encoded: 25
-		setBit(encodedFileBuffer, 8, 26 + blockNumber, getBit(originalFileBuffer, 8, 21 + blockNumber));			// Original: 21		Encoded: 26
-		setBit(encodedFileBuffer, 8, 27 + blockNumber, getBit(originalFileBuffer, 8, 22 + blockNumber));			// Original: 22		Encoded: 27
-		setBit(encodedFileBuffer, 8, 28 + blockNumber, getBit(originalFileBuffer, 8, 23 + blockNumber));			// Original: 23		Encoded: 28
-		setBit(encodedFileBuffer, 8, 29 + blockNumber, getBit(originalFileBuffer, 8, 24 + blockNumber));			// Original: 24		Encoded: 29
-		setBit(encodedFileBuffer, 8, 30 + blockNumber, getBit(originalFileBuffer, 8, 25 + blockNumber));			// Original: 25		Encoded: 30
+		setBit(encodedFileBuffer, 8, 16 + encodedBlockNumber, getBit(originalFileBuffer, 8, 11 + blockNumber));			// Original: 11		Encoded: 16
+		setBit(encodedFileBuffer, 8, 17 + encodedBlockNumber, getBit(originalFileBuffer, 8, 12 + blockNumber));			// Original: 12		Encoded: 17
+		setBit(encodedFileBuffer, 8, 18 + encodedBlockNumber, getBit(originalFileBuffer, 8, 13 + blockNumber));			// Original: 13		Encoded: 18
+		setBit(encodedFileBuffer, 8, 19 + encodedBlockNumber, getBit(originalFileBuffer, 8, 14 + blockNumber));			// Original: 14		Encoded: 19
+		setBit(encodedFileBuffer, 8, 20 + encodedBlockNumber, getBit(originalFileBuffer, 8, 15 + blockNumber));			// Original: 15		Encoded: 20
+		setBit(encodedFileBuffer, 8, 21 + encodedBlockNumber, getBit(originalFileBuffer, 8, 16 + blockNumber));			// Original: 16		Encoded: 21
+		setBit(encodedFileBuffer, 8, 22 + encodedBlockNumber, getBit(originalFileBuffer, 8, 17 + blockNumber));			// Original: 17		Encoded: 22
+		setBit(encodedFileBuffer, 8, 23 + encodedBlockNumber, getBit(originalFileBuffer, 8, 18 + blockNumber));			// Original: 18		Encoded: 23
+		setBit(encodedFileBuffer, 8, 24 + encodedBlockNumber, getBit(originalFileBuffer, 8, 19 + blockNumber));			// Original: 19		Encoded: 24
+		setBit(encodedFileBuffer, 8, 25 + encodedBlockNumber, getBit(originalFileBuffer, 8, 20 + blockNumber));			// Original: 20		Encoded: 25
+		setBit(encodedFileBuffer, 8, 26 + encodedBlockNumber, getBit(originalFileBuffer, 8, 21 + blockNumber));			// Original: 21		Encoded: 26
+		setBit(encodedFileBuffer, 8, 27 + encodedBlockNumber, getBit(originalFileBuffer, 8, 22 + blockNumber));			// Original: 22		Encoded: 27
+		setBit(encodedFileBuffer, 8, 28 + encodedBlockNumber, getBit(originalFileBuffer, 8, 23 + blockNumber));			// Original: 23		Encoded: 28
+		setBit(encodedFileBuffer, 8, 29 + encodedBlockNumber, getBit(originalFileBuffer, 8, 24 + blockNumber));			// Original: 24		Encoded: 29
+		setBit(encodedFileBuffer, 8, 30 + encodedBlockNumber, getBit(originalFileBuffer, 8, 25 + blockNumber));			// Original: 25		Encoded: 30
 
 		// Calculate control bits:
 		int controlBit0 = 1;
@@ -72,12 +73,13 @@ void hamming(char* originalFileBuffer, char* encodedFileBuffer, int originalFile
 		int controlBit4 = 1;
 
 		// Set control bits
-		setBit(encodedFileBuffer, 8, 0 + blockNumber, controlBit0);			// Original: CB0	Encoded: 0
-		setBit(encodedFileBuffer, 8, 1 + blockNumber, controlBit1);			// Original: CB1	Encoded: 1
-		setBit(encodedFileBuffer, 8, 3 + blockNumber, controlBit2);			// Original: CB2	Encoded: 3
-		setBit(encodedFileBuffer, 8, 7 + blockNumber, controlBit3);			// Original: CB3	Encoded: 7
-		setBit(encodedFileBuffer, 8, 15 + blockNumber, controlBit4);		// Original: CB4	Encoded: 15
+		setBit(encodedFileBuffer, 8, 0 + encodedBlockNumber, controlBit0);			// Original: CB0	Encoded: 0
+		setBit(encodedFileBuffer, 8, 1 + encodedBlockNumber, controlBit1);			// Original: CB1	Encoded: 1
+		setBit(encodedFileBuffer, 8, 3 + encodedBlockNumber, controlBit2);			// Original: CB2	Encoded: 3
+		setBit(encodedFileBuffer, 8, 7 + encodedBlockNumber, controlBit3);			// Original: CB3	Encoded: 7
+		setBit(encodedFileBuffer, 8, 15 + encodedBlockNumber, controlBit4);		// Original: CB4	Encoded: 15
 		printf("[!] Finished working on block %d out of %d\r\n", blockNumber / 26, originalFileLength / 26);
+		encodedBlockNumber += 31;
 	}
 
 }
@@ -216,7 +218,7 @@ int main(int argc, char* argv[]) {
 			exit(1);
 			// todo print
 		}
-		memset(encodedFileBuffer, 0, sizeof(char) * encodedFileSize);
+		//memset(encodedFileBuffer, 0, sizeof(char) * encodedFileSize);
 		hamming(fileContentBuffer, encodedFileBuffer, fileSize);
 
 		// Send the data through the socket
