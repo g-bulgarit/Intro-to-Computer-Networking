@@ -7,12 +7,19 @@
 #define LISTEN_PORT		6000
 #define SEND_PORT		6001
 #define MSG_SIZE		500000
+#define BYTE_SIZE_IN_BITS 8
 #define DEBUG
 
+
+void flipBit(char* buffer, int index) {
+	// Flip specific bit in buffer
+	buffer[index / BYTE_SIZE_IN_BITS] ^= ~(1u << (7 - (index % BYTE_SIZE_IN_BITS)));
+}
+
 void addDeterministicNoise(int n, char* buffer, int bufSize) {
-	for (int i = 0; i < bufSize; i++)
+	for (int i = 0; i < bufSize; i += n)
 	{
-		buffer[i] ^= (0xFF & (1 << n));
+		flipBit(buffer, i);
 	}
 }
 
@@ -104,8 +111,12 @@ int main(int argc, char* argv[]) {
 		// Add noise to the buffered data here
 		if (!strcmp(flag, "-d")) {
 			addDeterministicNoise(noiseAmt, recvBuf, MSG_SIZE);
-			printf("\r\nAdded noise!\r\n");
+			printf("\r\nAdded deterministic noise!\r\n");
 			printf("\r\n>After Noise: \r\n%s\r\n", recvBuf);
+		}
+		else if (!strcmp(flag, "-r")) {
+			printf("\r\nAdded random noise!\r\n");
+			// TODO add noise
 		}
 
 
