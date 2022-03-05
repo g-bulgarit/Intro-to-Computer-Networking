@@ -176,8 +176,8 @@ int main(int argc, char* argv[]) {
 		int encodedFileSize = (int) (fileSize - 1) * (31.0 / 26.0);
 		char* encodedFileBuffer = (char*)malloc(sizeof(char) * (encodedFileSize)); // allocate enough memory in bytes.
 		if (encodedFileBuffer == NULL) {
+			printf("[ERR] Failed to allocate enough memory for the encoded file buffer.\r\nExiting.");
 			exit(1);
-			// todo print
 		}
 		memset(encodedFileBuffer, 0, sizeof(char) * encodedFileSize);
 		hamming(fileContentBuffer, encodedFileBuffer, fileSize);
