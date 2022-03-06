@@ -17,9 +17,9 @@ void flipBit(char* buffer, int index) {
 }
 
 void addDeterministicNoise(int n, char* buffer, int bufSize) {
-	for (int i = 0; i < bufSize; i += n)
+	for (int bitIdx = 0; bitIdx < bufSize * BYTE_SIZE_IN_BITS; bitIdx += n)
 	{
-		flipBit(buffer, i);
+		flipBit(buffer, bitIdx);
 	}
 }
 
@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
 
 		// Add noise to the buffered data here
 		if (!strcmp(flag, "-d")) {
-			addDeterministicNoise(noiseAmt, recvBuf, MSG_SIZE);
+			addDeterministicNoise(noiseAmt, recvBuf, recievedMessageSize);
 			printf("\r\nAdded deterministic noise!\r\n");
 			printf("\r\n>After Noise: \r\n%s\r\n", recvBuf);
 		}
