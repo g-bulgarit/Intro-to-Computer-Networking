@@ -27,6 +27,15 @@ int getBit(char* buffer, int index) {
 
 }
 
+int checkControlBit(char* messageBuffer, int blockOffset, int* bitPositions, int arrayLength, int bitToCheck) {
+	int pairity = 0;
+	for (int i = 0; i < arrayLength; i++)
+	{
+		pairity ^= getBit(messageBuffer, bitPositions[i] + blockOffset);
+	}
+	return pairity;
+}
+
 void unhamming(char* recievedMessageBuffer, char* decodedFileBuffer, int messageLength) {
 	// This function reverses the hamming code to retrieve the original message.
 
@@ -38,7 +47,25 @@ void unhamming(char* recievedMessageBuffer, char* decodedFileBuffer, int message
 	int decodedBlockNumber = 0;
 	for (int blockNumber = 0; blockNumber < messageLength * BYTE_SIZE_IN_BITS; blockNumber += 31)
 	{
-		// Set data bits to correct places in the encoded file buffer
+		// Define hamming bits
+		int controlBit0_Bits[] = { 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30 };
+		int controlBit1_Bits[] = { 1, 2, 5, 6, 9, 10, 13, 14, 17, 18, 21, 22, 25, 26, 29, 30 };
+		int controlBit3_Bits[] = { 3, 4, 5, 6, 11, 12, 13, 14, 19, 20, 21, 22, 27, 28, 29, 30 };
+		int controlBit7_Bits[] = { 7, 8, 9, 10, 11, 12, 13, 14, 23, 24, 25, 26, 27, 28, 29, 30 };
+		int controlBit15_Bits[] = { 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
+
+		// Check hamming bits for error detection
+		int error0 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit0_Bits, 16,	0);
+		int error1 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit1_Bits, 16,	1);
+		int error3 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit3_Bits, 16,	3);
+		int error7 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit7_Bits, 16,	7);
+		int error15 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit15_Bits, 16,	15);
+
+		if (error0 || error1 || error3 || error7 || error15) {
+			printf("[Hamming Decode] Found an error at (encoded) block %d!\r\n", blockNumber / 31);
+		}
+
+		// Set data bits to correct places in the decoded file buffer
 		setBit(decodedFileBuffer, 0 + decodedBlockNumber, getBit(recievedMessageBuffer, 2 + blockNumber));			// Original: 0		Encoded: 2
 
 		setBit(decodedFileBuffer, 1 + decodedBlockNumber, getBit(recievedMessageBuffer, 4 + blockNumber));			// Original: 1		Encoded: 4
@@ -68,6 +95,8 @@ void unhamming(char* recievedMessageBuffer, char* decodedFileBuffer, int message
 		setBit(decodedFileBuffer, 23 + decodedBlockNumber, getBit(recievedMessageBuffer, 28 + blockNumber));		// Original: 23		Encoded: 28
 		setBit(decodedFileBuffer, 24 + decodedBlockNumber, getBit(recievedMessageBuffer, 29 + blockNumber));		// Original: 24		Encoded: 29
 		setBit(decodedFileBuffer, 25 + decodedBlockNumber, getBit(recievedMessageBuffer, 30 + blockNumber));		// Original: 25		Encoded: 30
+
+
 #ifdef DEBUG
 		printf("[!] Finished working on block %d out of %d\r\n", blockNumber / 31, messageLength * BYTE_SIZE_IN_BITS / 31);
 #endif
