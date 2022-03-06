@@ -28,9 +28,11 @@ void setControlBit(char* encodingBuffer, int blockOffset, int encodingOffset, in
 	int controlBit = 0;
 	for (int i = 0; i < arrayLength; i++)
 	{
-		controlBit ^= getBit(encodingBuffer, bitPositions[i] + blockOffset);
+
+		controlBit ^= getBit(encodingBuffer, bitPositions[i] + encodingOffset); // was block offset
 	}
 	setBit(encodingBuffer, bitToSet + encodingOffset, controlBit);
+
 }
 
 void hamming(char* originalFileBuffer, char* encodedFileBuffer, int originalFileLength) {
@@ -82,15 +84,28 @@ void hamming(char* originalFileBuffer, char* encodedFileBuffer, int originalFile
 		int controlBit3_Bits[] =	{ 3, 4, 5, 6, 11, 12, 13, 14, 19, 20, 21, 22, 27, 28, 29, 30 };
 		int controlBit7_Bits[] =	{ 7, 8, 9, 10, 11, 12, 13, 14, 23, 24, 25, 26, 27, 28, 29, 30 };
 		int controlBit15_Bits[] =	{ 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
-
-		setControlBit(encodedFileBuffer, blockNumber, encodedBlockNumber, controlBit0_Bits, 16, 0);	 // Set 0-th control bit		(1)
+#ifdef DEBUG
+		printf("\r\nBefore:\r\n");
+		for (int i = 0; i < 31; i++)
+		{
+			printf("%d", getBit(encodedFileBuffer, i + encodedBlockNumber));
+		}
+#endif
+		setControlBit(encodedFileBuffer, blockNumber, encodedBlockNumber, controlBit0_Bits, 16, 0);								// Set 0-th control bit		(1)
 		setControlBit(encodedFileBuffer, blockNumber, encodedBlockNumber, controlBit1_Bits, 16, 1);								// Set 1-st control bit		(2)
 		setControlBit(encodedFileBuffer, blockNumber, encodedBlockNumber, controlBit3_Bits, 16, 3);								// Set 3-rd control bit		(4)
 		setControlBit(encodedFileBuffer, blockNumber, encodedBlockNumber, controlBit7_Bits, 16, 7);								// Set 7-th control bit		(8)
 		setControlBit(encodedFileBuffer, blockNumber, encodedBlockNumber, controlBit15_Bits, 16, 15);							// Set 15-th control bit	(16)
+#ifdef DEBUG
+		printf("\r\nAfter:\r\n");
+		for (int i = 0; i < 31; i++)
+		{
+			printf("%d", getBit(encodedFileBuffer, i + encodedBlockNumber));
+		}
+#endif
 
 #ifdef DEBUG
-		printf("[!] Finished working on 26-bit block %d out of %d\r\n", blockNumber / 26, originalFileLength * BYTE_SIZE_IN_BITS / 26);
+		printf("\r\n[!] Finished working on 26-bit block %d out of %d\r\n", blockNumber / 26, originalFileLength * BYTE_SIZE_IN_BITS / 26);
 #endif
 		encodedBlockNumber += 31;
 	}
