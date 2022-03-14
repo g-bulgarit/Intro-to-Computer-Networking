@@ -120,10 +120,10 @@ int main(int argc, char* argv[]) {
 	SOCKET listenSocket;
 	SOCKET transmitSocket;
 	listenSocket = createSocket("127.0.0.1", LISTEN_PORT, LISTEN, &sListen);
-	transmitSocket = createSocket("127.0.0.1", SEND_PORT, SEND, &sSend);
 
 	while (1) {
-		// Main action loop
+		// Main action loop - create a new TX socket
+		transmitSocket = createSocket("127.0.0.1", SEND_PORT, SEND, &sSend);
 
 		printf("[Start] Started listening to the recieve socket, waiting for sender\r\n");
 	#ifdef DEBUG
