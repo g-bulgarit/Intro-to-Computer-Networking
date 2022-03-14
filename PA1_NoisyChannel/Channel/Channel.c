@@ -73,9 +73,17 @@ SOCKET createSocket(char* ipAddress, int port, int mode, struct sockaddr_in* soc
 	if (mode == LISTEN) {
 		// Bind listen socket
 		int retcode = bind(s, (SOCKADDR*)sockStruct, sizeof(*sockStruct));
-		int canListen = listen(s, 1);
-	}
+		if (retcode) {
+			printf("[ERR] Failed to bind socket, perhaps the specified port is taken?");
+			exit(1);
+		}
 
+		int canListen = listen(s, 1);
+		if (canListen) {
+			printf("[ERR] Failed to open a listening connection on the socket");
+			exit(1);
+		}
+	}
 	return s;
 }
 
@@ -152,12 +160,6 @@ int main(int argc, char* argv[]) {
 			printf("\r\nAdded random noise!, flipped %d bits\r\n", amtBitsFlipped);
 		}
 
-		// Create actual IPv4 TCP socket for sending
-		if ((transmitSocket = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
-		{
-			printf("[ERR] Failed to create transmitting socket, error code %d\r\n", WSAGetLastError());
-			exit(1);
-		}
 
 		// Connect to server socket
 		int listen_retcode = connect(transmitSocket, (SOCKADDR*)&sSend, sizeof(sSend));
