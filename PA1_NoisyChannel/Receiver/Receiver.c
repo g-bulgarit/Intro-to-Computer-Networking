@@ -27,6 +27,13 @@ int getBit(char* buffer, int index) {
 
 }
 
+void flipBit(char* buffer, int index) {
+	// Flip specific bit in buffer
+
+	buffer[index / BYTE_SIZE_IN_BITS] ^= (1u << (7 - (index % BYTE_SIZE_IN_BITS)));
+
+}
+
 int checkControlBit(char* messageBuffer, int blockOffset, int* bitPositions, int arrayLength, int bitToCheck) {
 	int pairity = 0;
 	for (int i = 0; i < arrayLength; i++)
@@ -34,6 +41,26 @@ int checkControlBit(char* messageBuffer, int blockOffset, int* bitPositions, int
 		pairity ^= getBit(messageBuffer, bitPositions[i] + blockOffset);
 	}
 	return pairity;
+}
+
+int findFlippedBit(int error0, int error1, int error3, int error7, int error15) {
+	char errorIdx[] = {0};
+	int flippedBitLocation = -1;
+	/*setBit(errorIdx, 7, error15);
+	setBit(errorIdx, 6, error7);
+	setBit(errorIdx, 5, error3);
+	setBit(errorIdx, 4, error1);
+	setBit(errorIdx, 3, error0);*/
+
+	setBit(errorIdx, 7, error0);
+	setBit(errorIdx, 6, error1);
+	setBit(errorIdx, 5, error3);
+	setBit(errorIdx, 4, error7);
+	setBit(errorIdx, 3, error15);
+	printf("\r\n[!]Error is at position: %d\r\n", errorIdx[0] -1);
+	
+	flippedBitLocation = errorIdx[0] - 1;
+	return flippedBitLocation;
 }
 
 void unhamming(char* recievedMessageBuffer, char* decodedFileBuffer, int messageLength) {
@@ -54,15 +81,26 @@ void unhamming(char* recievedMessageBuffer, char* decodedFileBuffer, int message
 		int controlBit7_Bits[] = { 7, 8, 9, 10, 11, 12, 13, 14, 23, 24, 25, 26, 27, 28, 29, 30 };
 		int controlBit15_Bits[] = { 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
 
+#ifdef DEBUG
+		printf("\r\Recieved:\r\n");
+		for (int i = 0; i < 31; i++)
+		{
+			printf("%d", getBit(recievedMessageBuffer, i + blockNumber));
+		}
+		printf("\r\n");
+#endif
 		// Check hamming bits for error detection
 		int error0 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit0_Bits, 16,	0);
 		int error1 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit1_Bits, 16,	1);
 		int error3 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit3_Bits, 16,	3);
 		int error7 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit7_Bits, 16,	7);
 		int error15 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit15_Bits, 16,	15);
-
+		int errorLocation = -1;
 		if (error0 || error1 || error3 || error7 || error15) {
 			printf("[Hamming Decode] Found an error at (encoded) block %d!\r\n", blockNumber / 31);
+			errorLocation = findFlippedBit(error0, error1, error3, error7, error15);
+			flipBit(recievedMessageBuffer, blockNumber + errorLocation);
+			printf("[Hamming Decode] Flipped bit %d block %d!\r\n", errorLocation, blockNumber / 31);
 		}
 
 		// Set data bits to correct places in the decoded file buffer

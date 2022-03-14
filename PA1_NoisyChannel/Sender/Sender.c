@@ -32,6 +32,9 @@ void setControlBit(char* encodingBuffer, int blockOffset, int encodingOffset, in
 		controlBit ^= getBit(encodingBuffer, bitPositions[i] + encodingOffset); // was block offset
 	}
 	setBit(encodingBuffer, bitToSet + encodingOffset, controlBit);
+#ifdef DEBUG
+	printf("Set control bit %d to %d", bitToSet, controlBit);
+#endif
 
 }
 

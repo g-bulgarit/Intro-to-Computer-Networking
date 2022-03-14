@@ -13,7 +13,9 @@
 
 void flipBit(char* buffer, int index) {
 	// Flip specific bit in buffer
-	buffer[index / BYTE_SIZE_IN_BITS] ^= ~(1u << (7 - (index % BYTE_SIZE_IN_BITS)));
+
+	buffer[index / BYTE_SIZE_IN_BITS] ^= (1u << (7 - (index % BYTE_SIZE_IN_BITS)));
+
 }
 
 void addDeterministicNoise(int n, char* buffer, int bufSize) {
