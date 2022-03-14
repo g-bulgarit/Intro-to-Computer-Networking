@@ -1,5 +1,8 @@
+// General Imports
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
+
+// Winsock Imports
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "winsock2.h"
 #pragma comment(lib, "ws2_32.lib") //Winsock Library
@@ -7,12 +10,55 @@
 #define MSG_SIZE 500000
 #define BYTE_SIZE_IN_BITS 8
 
+#define LISTEN			1
+#define SEND			2
+
+
 // For development, remove before submitting TODO
 #define DEBUG
 
+SOCKET createSocket(char* ipAddress, int port, int mode, struct sockaddr_in* sockStruct) {
+	// Function to construct and return a working socket in either 'listen' or 'send' mode.
+	SOCKET s;
+	WSADATA wsaData;
+
+	sockStruct->sin_family = AF_INET;
+	sockStruct->sin_port = htons(port);
+	sockStruct->sin_addr.s_addr = inet_addr(ipAddress);
+
+	// Init winsockets
+	int wsaRes = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (wsaRes != NO_ERROR) {
+		printf("[ERR] WSAStartup() failed.\r\n");
+		exit(1);
+	}
+
+	// Create actual IPv4 TCP socket for listening
+	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
+	{
+		printf("[ERR] Failed to create listening socket, error code %d\r\n", WSAGetLastError());
+		exit(1);
+	}
+
+	if (mode == LISTEN) {
+		// Bind listen socket
+		int retcode = bind(s, (SOCKADDR*)sockStruct, sizeof(*sockStruct));
+		if (retcode) {
+			printf("[ERR] Failed to bind socket, perhaps the specified port is taken?");
+			exit(1);
+		}
+
+		int canListen = listen(s, 1);
+		if (canListen) {
+			printf("[ERR] Failed to open a listening connection on the socket");
+			exit(1);
+		}
+	}
+	return s;
+}
+
 void setBit(char* buffer, int index, int value) {
 	// Set specific bit in buffer to specific value
-
 	buffer[index / BYTE_SIZE_IN_BITS] &= ~(1u << (7 - (index % BYTE_SIZE_IN_BITS))); // This sets the bit to be 0
 	// Set the bit to 1 if needed
 	if (value == 1) {
@@ -24,17 +70,14 @@ int getBit(char* buffer, int index) {
 	// Get specific bit value from buffer using mask and shift
 	int bit = (buffer[index / BYTE_SIZE_IN_BITS] >> (7 - (index % BYTE_SIZE_IN_BITS))) & 1;
 	return bit;
-
 }
 
 void flipBit(char* buffer, int index) {
 	// Flip specific bit in buffer
-
 	buffer[index / BYTE_SIZE_IN_BITS] ^= (1u << (7 - (index % BYTE_SIZE_IN_BITS)));
-
 }
 
-int checkControlBit(char* messageBuffer, int blockOffset, int* bitPositions, int arrayLength, int bitToCheck) {
+int checkControlBit(char* messageBuffer, int blockOffset, int* bitPositions, int arrayLength) {
 	int pairity = 0;
 	for (int i = 0; i < arrayLength; i++)
 	{
@@ -44,21 +87,18 @@ int checkControlBit(char* messageBuffer, int blockOffset, int* bitPositions, int
 }
 
 int findFlippedBit(int error0, int error1, int error3, int error7, int error15) {
+	// Function to locate the index of the bit that was flipped in transmission.
 	char errorIdx[] = {0};
 	int flippedBitLocation = -1;
-	/*setBit(errorIdx, 7, error15);
-	setBit(errorIdx, 6, error7);
-	setBit(errorIdx, 5, error3);
-	setBit(errorIdx, 4, error1);
-	setBit(errorIdx, 3, error0);*/
 
 	setBit(errorIdx, 7, error0);
 	setBit(errorIdx, 6, error1);
 	setBit(errorIdx, 5, error3);
 	setBit(errorIdx, 4, error7);
 	setBit(errorIdx, 3, error15);
+#ifdef DEBUG
 	printf("\r\n[!]Error is at position: %d\r\n", errorIdx[0] -1);
-	
+#endif
 	flippedBitLocation = errorIdx[0] - 1;
 	return flippedBitLocation;
 }
@@ -90,11 +130,11 @@ void unhamming(char* recievedMessageBuffer, char* decodedFileBuffer, int message
 		printf("\r\n");
 #endif
 		// Check hamming bits for error detection
-		int error0 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit0_Bits, 16,	0);
-		int error1 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit1_Bits, 16,	1);
-		int error3 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit3_Bits, 16,	3);
-		int error7 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit7_Bits, 16,	7);
-		int error15 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit15_Bits, 16,	15);
+		int error0 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit0_Bits, 16);
+		int error1 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit1_Bits, 16);
+		int error3 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit3_Bits, 16);
+		int error7 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit7_Bits, 16);
+		int error15 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit15_Bits, 16);
 		int errorLocation = -1;
 		if (error0 || error1 || error3 || error7 || error15) {
 			printf("[Hamming Decode] Found an error at (encoded) block %d!\r\n", blockNumber / 31);
@@ -135,7 +175,6 @@ void unhamming(char* recievedMessageBuffer, char* decodedFileBuffer, int message
 		setBit(decodedFileBuffer, 24 + decodedBlockNumber, getBit(recievedMessageBuffer, 29 + blockNumber));		// Original: 24		Encoded: 29
 		setBit(decodedFileBuffer, 25 + decodedBlockNumber, getBit(recievedMessageBuffer, 30 + blockNumber));		// Original: 25		Encoded: 30
 
-
 #ifdef DEBUG
 		printf("[!] Finished working on block %d out of %d\r\n", blockNumber / 31, messageLength * BYTE_SIZE_IN_BITS / 31);
 #endif
@@ -158,34 +197,13 @@ int main(int argc, char* argv[]) {
 	}
 
 	// Set up connection details
+	int port = atoi(argv[2]);
+	char* ipAddr = argv[1];
 	struct sockaddr_in server;
-	server.sin_family = AF_INET;
-	server.sin_port = htons(atoi(argv[2]));
-	server.sin_addr.s_addr = inet_addr(argv[1]);
+	struct sockaddr_in client; // For retaining the connection details from the client
 
-	struct sockaddr_in client;
-
-	// initialize windows networking and check for errors.
-	WSADATA wsaData;
 	SOCKET rxSocket;
-
-	int wsaRes = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (wsaRes != NO_ERROR) {
-		printf("[ERR] WSAStartup() failed.\r\n");
-		exit(1);
-	}
-
-	// Create actual IPv4 TCP socket
-	if ((rxSocket = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
-	{
-		printf("[ERR] Failed to create socket, error code %d\r\n", WSAGetLastError());
-		exit(1);
-	}
-
-	// Bind socket
-	int retcode = bind(rxSocket, (SOCKADDR*)&server, sizeof(server));
-	int listen_retcode = listen(rxSocket, 1);
-	// TODO: Test retcodes
+	rxSocket = createSocket(ipAddr, port, LISTEN, &server);
 
 	// Setup recv buffer
 	char* recvBuf = (char*)malloc(sizeof(char) * MSG_SIZE);
