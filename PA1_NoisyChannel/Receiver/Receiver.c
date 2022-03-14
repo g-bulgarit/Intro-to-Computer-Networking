@@ -63,7 +63,7 @@ int findFlippedBit(int error0, int error1, int error3, int error7, int error15) 
 	return flippedBitLocation;
 }
 
-void unhamming(char* recievedMessageBuffer, char* decodedFileBuffer, int messageLength) {
+void unhamming(char* recievedMessageBuffer, char* decodedFileBuffer, int messageLength, int* fixedBits) {
 	// This function reverses the hamming code to retrieve the original message.
 
 	// Bits are numbered from 0 to 30 in each block.
@@ -100,6 +100,7 @@ void unhamming(char* recievedMessageBuffer, char* decodedFileBuffer, int message
 			printf("[Hamming Decode] Found an error at (encoded) block %d!\r\n", blockNumber / 31);
 			errorLocation = findFlippedBit(error0, error1, error3, error7, error15);
 			flipBit(recievedMessageBuffer, blockNumber + errorLocation);
+			*fixedBits += 1;
 			printf("[Hamming Decode] Flipped bit %d block %d!\r\n", errorLocation, blockNumber / 31);
 		}
 
@@ -147,6 +148,7 @@ void unhamming(char* recievedMessageBuffer, char* decodedFileBuffer, int message
 int main(int argc, char* argv[]) {
 	FILE* wfp;
 	char fileNameBuffer[3000];
+	int fixedBits = 0;
 
 	printf("-------[RECIEVER]------- \r\n\r\n");
 	// Check for cmdline args
@@ -211,10 +213,12 @@ int main(int argc, char* argv[]) {
 		// Set entire buffer to 0.
 		memset(decodedFileBuffer, 0, sizeof(char) * decodedFileSize + 1);
 
-		unhamming(recvBuf, decodedFileBuffer, recievedMessageSize);
+		unhamming(recvBuf, decodedFileBuffer, recievedMessageSize, &fixedBits);
 		decodedFileBuffer[decodedFileSize + 1] = '\0';
 		printf("[Decode] Decoded %d bytes\r\n", decodedFileSize);
 		printf("[Decode] Decoded:\r\n%s\r\n", decodedFileBuffer);
+		printf("[Decode] Overall, fixed %d bits\r\n", fixedBits);
+
 
 		// Save the file with the help of some user input
 		printf(">: Enter filename: ");
@@ -223,6 +227,7 @@ int main(int argc, char* argv[]) {
 		fwrite(decodedFileBuffer, 1, decodedFileSize, wfp);
 		fclose(wfp);
 		closesocket(s);
+		fixedBits = 0;
 	}
 
 	return 0;

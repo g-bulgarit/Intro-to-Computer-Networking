@@ -18,11 +18,21 @@ void flipBit(char* buffer, int index) {
 
 }
 
-void addDeterministicNoise(int n, char* buffer, int bufSize) {
+void addDeterministicNoise(int n, char* buffer, int bufSize, int* flippedBits) {
 	for (int bitIdx = 0; bitIdx < bufSize * BYTE_SIZE_IN_BITS; bitIdx += n)
 	{
 		flipBit(buffer, bitIdx);
+		*flippedBits += 1;
 	}
+}
+
+void addRandomNoise(int prob, int seed, char* buffer, int bufferSize, int* flippedBits) {
+	// For each bit in the message, flip it with probability 'prob'/2^16.
+	for (int i = 0; i < bufferSize; i++){
+		//rand();
+		*flippedBits += 1;
+	}
+
 }
 
 int main(int argc, char* argv[]) {
@@ -32,6 +42,8 @@ int main(int argc, char* argv[]) {
 	int randomNoiseSeed = 0;
 	// User input
 	char userInputBuffer[5];
+	int amtBitsFlipped = 0;
+
 
 	printf("-------[NOISY CHANNEL]------- \r\n\r\n");
 
@@ -112,8 +124,8 @@ int main(int argc, char* argv[]) {
 
 		// Add noise to the buffered data here
 		if (!strcmp(flag, "-d")) {
-			addDeterministicNoise(noiseAmt, recvBuf, recievedMessageSize);
-			printf("\r\nAdded deterministic noise!\r\n");
+			addDeterministicNoise(noiseAmt, recvBuf, recievedMessageSize, &amtBitsFlipped);
+			printf("\r\nAdded deterministic noise!, flipped %d bits\r\n", amtBitsFlipped);
 			printf("\r\n>After Noise: \r\n%s\r\n", recvBuf);
 		}
 		else if (!strcmp(flag, "-r")) {
@@ -136,6 +148,7 @@ int main(int argc, char* argv[]) {
 		closesocket(transmitSocket);
 
 		printf(">: Continue? (yes/no)\r\n");
+		amtBitsFlipped = 0;
 		scanf("%s", &userInputBuffer);
 		if (!strcmp(userInputBuffer, "no")) {
 			exit(0);

@@ -154,7 +154,6 @@ int main(int argc, char* argv[]) {
 
 
 	while (!stopUserInput) {
-		printf("TEST");
 		// Create actual IPv4 TCP socket
 		if ((txSocket = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
 		{
