@@ -1,5 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "winsock2.h"
 #pragma comment(lib, "ws2_32.lib") //Winsock Library
@@ -28,9 +30,15 @@ void addDeterministicNoise(int n, char* buffer, int bufSize, int* flippedBits) {
 
 void addRandomNoise(int prob, int seed, char* buffer, int bufferSize, int* flippedBits) {
 	// For each bit in the message, flip it with probability 'prob'/2^16.
-	for (int i = 0; i < bufferSize; i++){
-		//rand();
-		*flippedBits += 1;
+	int cap = pow(2,16);
+	srand(seed);
+	for (int i = 0; i < bufferSize * BYTE_SIZE_IN_BITS; i++){
+		int doFlip = (rand() % cap) < prob;
+		if (doFlip) {
+			flipBit(buffer, i);
+			*flippedBits += 1;
+		}
+		
 	}
 
 }
@@ -122,15 +130,15 @@ int main(int argc, char* argv[]) {
 		}
 		closesocket(s);
 
-		// Add noise to the buffered data here
+		// Add noise to the buffered data here, depending on the flag provided by the user.
 		if (!strcmp(flag, "-d")) {
 			addDeterministicNoise(noiseAmt, recvBuf, recievedMessageSize, &amtBitsFlipped);
 			printf("\r\nAdded deterministic noise!, flipped %d bits\r\n", amtBitsFlipped);
 			printf("\r\n>After Noise: \r\n%s\r\n", recvBuf);
 		}
 		else if (!strcmp(flag, "-r")) {
-			printf("\r\nAdded random noise!\r\n");
-			// TODO add noise
+			addRandomNoise(noiseAmt, randomNoiseSeed, recvBuf, recievedMessageSize, &amtBitsFlipped);
+			printf("\r\nAdded random noise!, flipped %d bits\r\n", amtBitsFlipped);
 		}
 
 
