@@ -1,16 +1,23 @@
+// General Imports
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
+
+// Winsock Imports
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "winsock2.h"
 #pragma comment(lib, "ws2_32.lib") //Winsock Library
 
+// General Constants
+#define BYTE_SIZE_IN_BITS 8
+#define LISTEN			1
+#define SEND			2
+
 // For development, remove before submitting TODO
 #define DEBUG
-#define BYTE_SIZE_IN_BITS 8
+
 
 void setBit(char* buffer, int index, int value) {
 	// Set specific bit in buffer to specific value
-
 	buffer[index / BYTE_SIZE_IN_BITS] &= ~(1u << (7 - (index % BYTE_SIZE_IN_BITS))); // This sets the bit to be 0
 	// Set the bit to 1 if needed
 	if (value == 1) {
@@ -25,10 +32,10 @@ int getBit(char* buffer, int index) {
 }
 
 void setControlBit(char* encodingBuffer, int blockOffset, int encodingOffset, int* bitPositions, int arrayLength, int bitToSet) {
+	// Set hamming control-bits using an array of bits to check and a rolling xor, such that an even pairity is achieved.
 	int controlBit = 0;
 	for (int i = 0; i < arrayLength; i++)
 	{
-
 		controlBit ^= getBit(encodingBuffer, bitPositions[i] + encodingOffset); // was block offset
 	}
 	setBit(encodingBuffer, bitToSet + encodingOffset, controlBit);
@@ -37,6 +44,47 @@ void setControlBit(char* encodingBuffer, int blockOffset, int encodingOffset, in
 #endif
 
 }
+
+SOCKET createSocket(char* ipAddress, int port, int mode, struct sockaddr_in* sockStruct) {
+	// Function to construct and return a working socket in either 'listen' or 'send' mode.
+	SOCKET s;
+	WSADATA wsaData;
+
+	sockStruct->sin_family = AF_INET;
+	sockStruct->sin_port = htons(port);
+	sockStruct->sin_addr.s_addr = inet_addr(ipAddress);
+
+	// Init winsockets
+	int wsaRes = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (wsaRes != NO_ERROR) {
+		printf("[ERR] WSAStartup() failed.\r\n");
+		exit(1);
+	}
+
+	// Create actual IPv4 TCP socket for listening
+	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
+	{
+		printf("[ERR] Failed to create listening socket, error code %d\r\n", WSAGetLastError());
+		exit(1);
+	}
+
+	if (mode == LISTEN) {
+		// Bind listen socket
+		int retcode = bind(s, (SOCKADDR*)sockStruct, sizeof(*sockStruct));
+		if (retcode) {
+			printf("[ERR] Failed to bind socket, perhaps the specified port is taken?");
+			exit(1);
+		}
+
+		int canListen = listen(s, 1);
+		if (canListen) {
+			printf("[ERR] Failed to open a listening connection on the socket");
+			exit(1);
+		}
+	}
+	return s;
+}
+
 
 void hamming(char* originalFileBuffer, char* encodedFileBuffer, int originalFileLength) {
 	// Encode message with hamming code to allow single bit error correction or two-bit error detection.
@@ -118,7 +166,6 @@ void hamming(char* originalFileBuffer, char* encodedFileBuffer, int originalFile
 int main(int argc, char* argv[]) {
 	int stopUserInput = 0;
 	char fileNameBuffer[3000];
-
 	char* fileContentBuffer;
 	FILE* rfp;
 
@@ -132,41 +179,24 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 
-	// Set up connection details
-	struct sockaddr_in remote;
-	remote.sin_family = AF_INET;
-	remote.sin_port = htons(atoi(argv[2]));
-	remote.sin_addr.s_addr = inet_addr(argv[1]);
-
-#ifdef DEBUG
-	printf("[DEBUG] Starting sender with IP %s and port %d\r\n", argv[1], remote.sin_port);
-#endif
-
-	// initialize windows networking and check for errors.
-	WSADATA wsaData;
+	// Set up connection 
+	int port = atoi(argv[2]);
 	SOCKET txSocket;
-
-	int wsaRes = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (wsaRes != NO_ERROR) {
-		printf("[ERR] WSAStartup() failed.\n");
-		exit(1);
-	}
-
-
+	struct sockaddr_in remote;
+	
 	while (!stopUserInput) {
-		// Create actual IPv4 TCP socket
-		if ((txSocket = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
-		{
-			printf("[ERR] Failed to create socket, error code %d", WSAGetLastError());
-			exit(1);
-		}
 		// Connect to server socket
+		txSocket = createSocket("127.0.0.1", port, SEND, &remote);
 		int listen_retcode = connect(txSocket, (SOCKADDR*)&remote, sizeof(remote));
+#ifdef DEBUG
+		printf("[DEBUG] Starting sender with IP %s and port %d\r\n", argv[1], remote.sin_port);
+#endif
 
 #ifdef DEBUG
 		printf("[Start] Connected to the Noisy Channel\r\n");
 #endif
-		printf(">: Enter file name: ");
+		// Get filename from user
+		printf(">: Enter file name (or type quit (...to quit)): ");
 		scanf("%s", &fileNameBuffer);
 
 		if (!strcmp(fileNameBuffer, "quit"))
@@ -181,8 +211,7 @@ int main(int argc, char* argv[]) {
 		rewind(rfp, 0, SEEK_SET); // seek back to beginning
 		fileContentBuffer = (char*)malloc(sizeof(char) * (fileSize)); // allocate enough memory in bytes.
 
-
-
+		// Read the file to our buffer
 		if (rfp != NULL) {
 			size_t newLen = fread(fileContentBuffer, sizeof(char), fileSize, rfp);
 			if (ferror(rfp) != 0) {
@@ -207,6 +236,8 @@ int main(int argc, char* argv[]) {
 			exit(1);
 		}
 		memset(encodedFileBuffer, 0, sizeof(char) * encodedFileSize);
+
+		// Encode with hamming code
 		hamming(fileContentBuffer, encodedFileBuffer, fileSize);
 
 		// Send the data through the socket
@@ -216,6 +247,5 @@ int main(int argc, char* argv[]) {
 		free(encodedFileBuffer); // Free used memory
 		closesocket(txSocket);
 	}
-
 	return 0;
 }
