@@ -39,7 +39,6 @@ int main(int argc, char* argv[]) {
 		// Get filename from user
 		printf(">: Enter file name (or type quit (...to quit)): ");
 		scanf("%s", &fileNameBuffer);
-		fileNameBuffer[MAX_FILENAME_LENGTH - 1] = '\0';
 
 		if (!strcmp(fileNameBuffer, "quit"))
 			exit(0);
@@ -51,7 +50,7 @@ int main(int argc, char* argv[]) {
 		fseek(rfp, 0, SEEK_END); // get offset at end of file
 		int fileSize = ftell(rfp); // Get size
 		rewind(rfp, 0, SEEK_SET); // seek back to beginning
-		fileContentBuffer = (char*)malloc(sizeof(char) * (fileSize)); // allocate enough memory in bytes.
+		fileContentBuffer = (char*)malloc(sizeof(char) * (fileSize) + 1); // allocate enough memory in bytes +1 for null
 
 		// Read the file to our buffer
 		if (rfp != NULL) {
@@ -61,7 +60,7 @@ int main(int argc, char* argv[]) {
 				exit(1);
 			}
 			else {
-				fileContentBuffer[newLen] = '\0';
+				fileContentBuffer[newLen++] = '\0';
 			}
 			fclose(rfp);
 		}
@@ -89,7 +88,8 @@ int main(int argc, char* argv[]) {
 		int sent_bytes = send(txSocket, encodedFileBuffer, encodedFileSize, 0);
 		printf(">: Sent: %d bytes\n", sent_bytes);
 
-		free(encodedFileBuffer); // Free used memory 
+		free(fileContentBuffer); // Free used memory for the original file
+		free(encodedFileBuffer); // Free used memory for the encoded file
 		closesocket(txSocket);
 	}
 	return 0;
