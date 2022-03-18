@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
 	
 	while (!stopUserInput) {
 		// Connect to server socket
-		txSocket = createSocket("127.0.0.1", port, SEND, &remote);
+		txSocket = createSocket(argv[1], port, SEND, &remote);
 		int listen_retcode = connect(txSocket, (SOCKADDR*)&remote, sizeof(remote));
 
 #ifdef DEBUG
