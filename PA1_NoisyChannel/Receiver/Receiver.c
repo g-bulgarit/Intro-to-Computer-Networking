@@ -198,21 +198,24 @@ int main(int argc, char* argv[]) {
 
 	// Set up connection details
 	int port = atoi(argv[2]);
-	char* ipAddr = argv[1];
+	//char* ipAddr = argv[1];
 	struct sockaddr_in server;
-	struct sockaddr_in client; // For retaining the connection details from the client
 
 	SOCKET rxSocket;
-	rxSocket = createSocket(ipAddr, port, LISTEN, &server);
+	rxSocket = createSocket(argv[1], port, SEND, &server);
 
 	// Setup recv buffer
 	char* recvBuf = (char*)malloc(sizeof(char) * MSG_SIZE);
-	printf("[Start] Started socket, listening to connections from the noisy channel\r\n");
+	printf("[Start] Started socket, connecting to the noisy channel\r\n");
 
 	while (1) {
 		int c = sizeof(struct sockaddr_in);
-		SOCKET s = accept(rxSocket, (SOCKADDR*)&client, &c);
-		int recievedMessageSize = recv(s, recvBuf, MSG_SIZE, 0);
+		int recievedMessageSize = 0;
+		int connectRetcode = connect(rxSocket, (SOCKADDR*)&server, sizeof(server));
+		recievedMessageSize = recv(rxSocket, recvBuf, MSG_SIZE, 0);
+
+		printf("\r\n Passed RECV");
+
 		recvBuf = (char*)realloc(recvBuf, recievedMessageSize + 1);
 		recvBuf[recievedMessageSize + 1] = '\0';
 
@@ -244,7 +247,7 @@ int main(int argc, char* argv[]) {
 		wfp = fopen(fileNameBuffer, "wb+");
 		fwrite(decodedFileBuffer, 1, decodedFileSize, wfp);
 		fclose(wfp);
-		closesocket(s);
+		closesocket(rxSocket);
 		fixedBits = 0;
 	}
 

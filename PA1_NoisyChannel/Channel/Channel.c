@@ -50,7 +50,6 @@ void addRandomNoise(int prob, int seed, char* buffer, int bufferSize, int* flipp
 	}
 }
 
-SOCKET createSocket(struct in_addr* ipAddress, int port, int mode, struct sockaddr_in* sockStruct) {
 SOCKET createSocket(struct in_addr* ipAddress, int port, int mode, struct sockaddr_in* sockStruct, int* chosenPort) {
 	// Function to construct and return a working socket in either 'listen' or 'send' mode.
 	SOCKET s;
@@ -144,20 +143,22 @@ int main(int argc, char* argv[]) {
 	}
 
 	// Initialize sockets :)
-	struct sockaddr_in sListen, sSend;
-	SOCKET listenSocket;
-	SOCKET transmitSocket;
-
-	struct in_addr thisPcAddr = getThisPcAddr();
-	listenSocket = createSocket(&thisPcAddr, LISTEN_PORT, LISTEN, &sListen);
+	struct sockaddr_in sReceiver;
+	struct sockaddr_in sSender;
+	struct in_addr localIP = getThisPcAddr();
+	int senderPort = 0;
+	int recieverPort = 0;
 	
 
 	while (1) {
-		// Main action loop - create a new TX socket
-		transmitSocket = createSocket(&thisPcAddr, SEND_PORT, SEND, &sSend);
+		// Main action loop - create sockets for listening to the sender and reciever.
+		SOCKET listenToSender =		createSocket(&localIP, 0, LISTEN, &sSender,		&senderPort);
+		SOCKET listenToReceiver =	createSocket(&localIP, 0, LISTEN, &sReceiver,	&recieverPort);
 
-		printf("[Start] Started listening to the recieve socket, waiting for sender\r\n");
-		printf("[Start] This machine's IP is %s\r\n", inet_ntoa(thisPcAddr));
+		printf("[INFO] Started listening to the recieve socket, waiting for sender\r\n");
+		printf("[INFO] This machine's IP is %s\r\n", inet_ntoa(localIP));
+		printf("[INFO] \tSet sender target to IP:\t%s,\tport:%d\r\n", inet_ntoa(localIP), senderPort);
+		printf("[INFO] \tSet reciever target to IP:\t%s,\tport:%d\r\n", inet_ntoa(localIP), recieverPort);
 	#ifdef DEBUG
 		printf("[DEBUG] Noise flag %s, amt %d, seed %d\r\n", flag, noiseAmt, randomNoiseSeed);
 	#endif
@@ -169,9 +170,13 @@ int main(int argc, char* argv[]) {
 			exit(1);
 		}
 
-		int c = sizeof(struct sockaddr_in);
-		SOCKET s = accept(listenSocket, (SOCKADDR*)&sListen, &c);
-		int recievedMessageSize = recv(s, recvBuf, MSG_SIZE, 0);
+		int senderParams = sizeof(struct sockaddr_in);
+		int receiverParams = sizeof(struct sockaddr_in);
+		SOCKET sockReciever = accept(listenToReceiver, (SOCKADDR*)&sReceiver, &receiverParams);
+		SOCKET sockSender = accept(listenToSender, (SOCKADDR*)&sSender, &senderParams);
+		printf("[INFO] Got two connections from Sender and Receiver\r\n");
+
+		int recievedMessageSize = recv(sockSender, recvBuf, MSG_SIZE, 0);
 
 		recvBuf = (char*)realloc(recvBuf, recievedMessageSize + 1);
 		recvBuf[recievedMessageSize + 1] = '\0';
@@ -179,7 +184,7 @@ int main(int argc, char* argv[]) {
 		if (recievedMessageSize) {
 			printf("\r\n>: Recieved %d bytes: \r\n%s\r\n", recievedMessageSize, recvBuf);
 		}
-		closesocket(s);
+		closesocket(sockSender);
 
 		// Add noise to the buffered data here, depending on the flag provided by the user.
 		if (!strcmp(flag, "-d")) {
@@ -194,11 +199,11 @@ int main(int argc, char* argv[]) {
 
 
 		// Connect to server socket
-		int listen_retcode = connect(transmitSocket, (SOCKADDR*)&sSend, sizeof(sSend));
-		printf("[Success] Connected to reciever \r\n");
-		int sentMessageSize = send(transmitSocket, recvBuf, recievedMessageSize, 0);
+		/*int listen_retcode = connect(listenToReceiver, (SOCKADDR*)&sSend, sizeof(sSend));
+		printf("[Success] Connected to reciever \r\n");*/
+		int sentMessageSize = send(sockReciever, recvBuf, recievedMessageSize, 0);
 		printf("[Success] Sent %d bytes\n", sentMessageSize);
-		closesocket(transmitSocket);
+		closesocket(sockReciever);
 
 		printf(">: Continue? (yes/no)\r\n");
 		amtBitsFlipped = 0;
