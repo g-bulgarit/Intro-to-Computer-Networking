@@ -15,6 +15,9 @@
 #define LISTEN			1
 #define SEND			2
 
+// For development, remove before submitting TODO
+#define DEBUG
+
 void setBit(char* buffer, int index, int value);
 int getBit(char* buffer, int index);
 void setControlBit(char* encodingBuffer, int blockOffset, int encodingOffset, int* bitPositions, int arrayLength, int bitToSet);
