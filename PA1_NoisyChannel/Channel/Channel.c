@@ -7,6 +7,7 @@
 // Winsock Imports
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "winsock2.h"
+#include <ws2tcpip.h>
 #pragma comment(lib, "ws2_32.lib") //Winsock Library
 
 // Constants and other stuff
@@ -14,6 +15,8 @@
 #define SEND_PORT		6001
 #define MSG_SIZE		500000
 #define BYTE_SIZE_IN_BITS 8
+#define HOSTNAME_LEN 300
+
 #define DEBUG
 
 #define LISTEN			1
@@ -47,14 +50,14 @@ void addRandomNoise(int prob, int seed, char* buffer, int bufferSize, int* flipp
 	}
 }
 
-SOCKET createSocket(char* ipAddress, int port, int mode, struct sockaddr_in* sockStruct) {
+SOCKET createSocket(struct in_addr* ipAddress, int port, int mode, struct sockaddr_in* sockStruct) {
 	// Function to construct and return a working socket in either 'listen' or 'send' mode.
 	SOCKET s;
 	WSADATA wsaData;
 
 	sockStruct->sin_family = AF_INET;
 	sockStruct->sin_port = htons(port);
-	sockStruct->sin_addr.s_addr = inet_addr(ipAddress);
+	sockStruct->sin_addr.s_addr = inet_addr(inet_ntoa(*ipAddress));
 
 	// Init winsockets
 	int wsaRes = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -85,6 +88,24 @@ SOCKET createSocket(char* ipAddress, int port, int mode, struct sockaddr_in* soc
 		}
 	}
 	return s;
+}
+
+struct in_addr getThisPcAddr() {
+	// Get this machines's IP address by looking up the hostname and then getting the IP from it.
+
+	WSADATA wsaData;
+	// Init winsockets
+	int wsaRes = WSAStartup(MAKEWORD(2, 2), &wsaData);
+
+	char hostname[HOSTNAME_LEN];
+	gethostname(hostname, HOSTNAME_LEN);
+
+	struct hostent* parseIpAddr;
+	parseIpAddr = gethostbyname(hostname);
+
+	struct in_addr addr;
+	addr.s_addr = *(u_long *)(parseIpAddr->h_addr_list[0]);
+	return addr;
 }
 
 int main(int argc, char* argv[]) {
@@ -119,13 +140,17 @@ int main(int argc, char* argv[]) {
 	struct sockaddr_in sListen, sSend;
 	SOCKET listenSocket;
 	SOCKET transmitSocket;
-	listenSocket = createSocket("127.0.0.1", LISTEN_PORT, LISTEN, &sListen);
+
+	struct in_addr thisPcAddr = getThisPcAddr();
+	listenSocket = createSocket(&thisPcAddr, LISTEN_PORT, LISTEN, &sListen);
+	
 
 	while (1) {
 		// Main action loop - create a new TX socket
-		transmitSocket = createSocket("127.0.0.1", SEND_PORT, SEND, &sSend);
+		transmitSocket = createSocket(&thisPcAddr, SEND_PORT, SEND, &sSend);
 
 		printf("[Start] Started listening to the recieve socket, waiting for sender\r\n");
+		printf("[Start] This machine's IP is %s\r\n", inet_ntoa(thisPcAddr));
 	#ifdef DEBUG
 		printf("[DEBUG] Noise flag %s, amt %d, seed %d\r\n", flag, noiseAmt, randomNoiseSeed);
 	#endif
