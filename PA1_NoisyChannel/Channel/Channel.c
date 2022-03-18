@@ -51,6 +51,7 @@ void addRandomNoise(int prob, int seed, char* buffer, int bufferSize, int* flipp
 }
 
 SOCKET createSocket(struct in_addr* ipAddress, int port, int mode, struct sockaddr_in* sockStruct) {
+SOCKET createSocket(struct in_addr* ipAddress, int port, int mode, struct sockaddr_in* sockStruct, int* chosenPort) {
 	// Function to construct and return a working socket in either 'listen' or 'send' mode.
 	SOCKET s;
 	WSADATA wsaData;
@@ -86,6 +87,12 @@ SOCKET createSocket(struct in_addr* ipAddress, int port, int mode, struct sockad
 			printf("[ERR] Failed to open a listening connection on the socket");
 			exit(1);
 		}
+	}
+	if (port == 0) {
+		// Find out which port was automatically selected and push it into the chosenPort var
+		int addrLength = sizeof(*sockStruct);
+		getsockname(s, (struct SOCKADDR*)sockStruct, &addrLength);
+		*chosenPort = ntohs(sockStruct->sin_port);
 	}
 	return s;
 }
