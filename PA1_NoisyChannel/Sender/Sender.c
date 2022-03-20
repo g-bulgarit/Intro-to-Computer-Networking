@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
 		int listen_retcode = connect(txSocket, (SOCKADDR*)&remote, sizeof(remote));
 
 #ifdef DEBUG
-		printf("[DEBUG] Starting sender with IP %s and port %d\r\n", argv[1], remote.sin_port);
+		printf("[DEBUG] Starting sender with IP %s and port %d\r\n", argv[1], port);
 		printf("[Start] Connected to the Noisy Channel\r\n");
 #endif
 
