@@ -62,14 +62,14 @@ SOCKET createSocket(struct in_addr* ipAddress, int port, int mode, struct sockad
 	// Init winsockets
 	int wsaRes = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (wsaRes != NO_ERROR) {
-		printf("[ERR] WSAStartup() failed.\r\n");
+		fprintf(stderr, "[ERR] WSAStartup() failed.\r\n");
 		exit(1);
 	}
 
 	// Create actual IPv4 TCP socket for listening
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
 	{
-		printf("[ERR] Failed to create listening socket, error code %d\r\n", WSAGetLastError());
+		fprintf(stderr, "[ERR] Failed to create listening socket, error code %d\r\n", WSAGetLastError());
 		exit(1);
 	}
 
@@ -77,13 +77,13 @@ SOCKET createSocket(struct in_addr* ipAddress, int port, int mode, struct sockad
 		// Bind listen socket
 		int retcode = bind(s, (SOCKADDR*)sockStruct, sizeof(*sockStruct));
 		if (retcode) {
-			printf("[ERR] Failed to bind socket, perhaps the specified port is taken?");
+			fprintf(stderr, "[ERR] Failed to bind socket, perhaps the specified port is taken?");
 			exit(1);
 		}
 
 		int canListen = listen(s, 1);
 		if (canListen) {
-			printf("[ERR] Failed to open a listening connection on the socket");
+			fprintf(stderr, "[ERR] Failed to open a listening connection on the socket");
 			exit(1);
 		}
 	}
@@ -102,6 +102,10 @@ struct in_addr getThisPcAddr() {
 	WSADATA wsaData;
 	// Init winsockets
 	int wsaRes = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (wsaRes != NO_ERROR) {
+		fprintf(stderr, "[ERR] WSAStartup() failed.\r\n");
+		exit(1);
+	}
 
 	char hostname[HOSTNAME_LEN];
 	gethostname(hostname, HOSTNAME_LEN);
@@ -164,7 +168,7 @@ int main(int argc, char* argv[]) {
 		// Allocate (too much) memory for message
 		char* recvBuf = (char*)malloc(sizeof(char) * MSG_SIZE);
 		if (recvBuf == NULL) {
-			printf("[ERR] Failed to allocate memory for recieving the message. Exiting");
+			fprintf(stderr, "[ERR] Failed to allocate memory for recieving the message. Exiting");
 			exit(1);
 		}
 
@@ -172,7 +176,7 @@ int main(int argc, char* argv[]) {
 		int receiverParams = sizeof(struct sockaddr_in);
 		SOCKET sockReciever = accept(listenToReceiver, (SOCKADDR*)&sReceiver, &receiverParams);
 		SOCKET sockSender = accept(listenToSender, (SOCKADDR*)&sSender, &senderParams);
-		printf("[INFO] Got two connections from Sender and Receiver\r\n");
+		printf("[INFO] Got two connections, one from Sender and one from Receiver!\r\n");
 
 		int recievedMessageSize = recv(sockSender, recvBuf, MSG_SIZE, 0);
 
@@ -187,23 +191,21 @@ int main(int argc, char* argv[]) {
 		// Add noise to the buffered data here, depending on the flag provided by the user.
 		if (!strcmp(flag, "-d")) {
 			addDeterministicNoise(noiseAmt, recvBuf, recievedMessageSize, &amtBitsFlipped);
-			printf("\r\nAdded deterministic noise!, flipped %d bits\r\n", amtBitsFlipped);
-			printf("\r\n>After Noise: \r\n%s\r\n", recvBuf);
+			printf("\r\n[INFO] Added deterministic noise!, flipped %d bits\r\n", amtBitsFlipped);
+#ifdef DEBUG
+			printf("\r\n>[INFO] After Noise: \r\n%s\r\n", recvBuf);
+#endif
 		}
 		else if (!strcmp(flag, "-r")) {
 			addRandomNoise(noiseAmt, randomNoiseSeed, recvBuf, recievedMessageSize, &amtBitsFlipped);
-			printf("\r\nAdded random noise!, flipped %d bits\r\n", amtBitsFlipped);
+			printf("\r\n[INFO] Added random noise!, flipped %d bits\r\n", amtBitsFlipped);
 		}
 
-
-		// Connect to server socket
-		/*int listen_retcode = connect(listenToReceiver, (SOCKADDR*)&sSend, sizeof(sSend));
-		printf("[Success] Connected to reciever \r\n");*/
 		int sentMessageSize = send(sockReciever, recvBuf, recievedMessageSize, 0);
-		printf("[Success] Sent %d bytes\n", sentMessageSize);
+		printf("[INFO] Sent %d bytes\r\n", sentMessageSize);
 		closesocket(sockReciever);
 
-		printf(">: Continue? (yes/no)\r\n");
+		printf("\r\n>: Continue? (yes/no)\r\n");
 		amtBitsFlipped = 0;
 		scanf("%s", &userInputBuffer);
 		if (!strcmp(userInputBuffer, "no")) {
