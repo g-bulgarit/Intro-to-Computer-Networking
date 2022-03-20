@@ -15,7 +15,7 @@
 
 
 // For development, remove before submitting TODO
-#define DEBUG
+// #define DEBUG
 
 SOCKET createSocket(char* ipAddress, int port, int mode, struct sockaddr_in* sockStruct) {
 	// Function to construct and return a working socket in either 'listen' or 'send' mode.
@@ -207,26 +207,25 @@ int main(int argc, char* argv[]) {
 	struct sockaddr_in server;
 
 	SOCKET rxSocket;
-
-	// Setup recv buffer
-	char* recvBuf = (char*)malloc(sizeof(char) * MSG_SIZE);
-	if (recvBuf == NULL) {
-		fprintf(stderr, "[ERR] Failed to allocate space for the recieve-buffer. Exiting.");
-		exit(1);
-	}
-
 	printf("[INFO] Started socket, connecting to the noisy channel...\r\n");
 
 	while (1) {
+		// Setup recv buffer
+		char* recvBuf = (char*)malloc(sizeof(char) * MSG_SIZE + 1);
+		if (recvBuf == NULL) {
+			fprintf(stderr, "[ERR] Failed to allocate space for the recieve-buffer. Exiting.");
+			exit(1);
+		}
+
 		rxSocket = createSocket(argv[1], port, SEND, &server);
 		int c = sizeof(struct sockaddr_in);
 		int recievedMessageSize = 0;
 		int connectRetcode = connect(rxSocket, (SOCKADDR*)&server, sizeof(server));
-		printf("[INFO] Connected successfully, waiting to recieved a message.\r\n");
+		printf("[INFO] Connected successfully, waiting to recieve a message.\r\n");
 		recievedMessageSize = recv(rxSocket, recvBuf, MSG_SIZE, 0);
 
-		recvBuf = (char*)realloc(recvBuf, recievedMessageSize + 1);
-		recvBuf[recievedMessageSize + 1] = '\0';
+		recvBuf = (char*)realloc(recvBuf, recievedMessageSize);
+		//recvBuf[recievedMessageSize] = '\0';
 
 		if (recievedMessageSize) {
 			printf("[INFO] Recieved %d bytes\r\n", recievedMessageSize);
@@ -237,17 +236,17 @@ int main(int argc, char* argv[]) {
 
 		// Decode the file here
 		int decodedFileSize = recievedMessageSize * (26.0 / 31.0);
-		char* decodedFileBuffer = (char*)malloc(sizeof(char) * decodedFileSize + 1);
+		char* decodedFileBuffer = (char*)malloc(sizeof(char) * decodedFileSize);
 		if (decodedFileBuffer == NULL) {
 			fprintf(stderr, "[ERR] Failed to allocate space for the decoded message buffer. Exiting");
 			exit(1);
 		}
 
 		// Set entire buffer to 0.
-		memset(decodedFileBuffer, 0, sizeof(char) * decodedFileSize + 1);
+		memset(decodedFileBuffer, 0, sizeof(char) * decodedFileSize);
 
 		unhamming(recvBuf, decodedFileBuffer, recievedMessageSize, &fixedBits);
-		decodedFileBuffer[decodedFileSize + 1] = '\0';
+		//decodedFileBuffer[decodedFileSize + 1] = '\0';
 		printf("[Decode] Decoded %d bytes\r\n", decodedFileSize);
 		printf("[Decode] Overall, fixed %d bits\r\n", fixedBits);
 #ifdef DEBUG
@@ -262,6 +261,10 @@ int main(int argc, char* argv[]) {
 		fwrite(decodedFileBuffer, 1, decodedFileSize, wfp);
 		fclose(wfp);
 		fixedBits = 0;
+
+		// Free memory
+		free(recvBuf);
+		free(decodedFileBuffer);
 		closesocket(rxSocket);
 	}
 	return 0;
