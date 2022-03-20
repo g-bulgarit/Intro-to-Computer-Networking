@@ -14,6 +14,16 @@ The goal was to retrieve the message, and fix single-bit errors using `(26, 31, 
 The code is written in `C` with the use of `winsock` for using sockets on windows machines.
 A lot of the basic principles were taken from [binarytides WinSockets tutorial](https://www.binarytides.com/winsock-socket-programming-tutorial/), other references are marked in the corresponding places in the source code.
 
+## **Implementation Roadmap**
+Generally, we tried to follow this roadmap in order to get as many of the project's components working in as little time as possible:
+1. Get two sockets working
+2. Get three sockets working, and try to pass one message without adding noise
+3. Add noise to the message and see if the output is messed up
+4. Implement hamming encoding and decoding and check that some noise can be fixed
+5. Cleanup
+
+In the end, everything worked out accoring to plan.
+
 ## **Challanges:**
 ### **Sockets**
 This was the first time we worked with sockets, so the introduction was a bit rough, but after a few prototyping stages we reached a point where we became confident with our implementation of sockets and we were easily able to extend it to support new functionality.
@@ -113,11 +123,16 @@ In order to do that, we used the function `getsockname` to load the new socket's
 [Decode] Overall, fixed 139 bits
 ```
 
-## **Limitations**
+## **Limitations & Bonuses**
+We decided not to work on any of the bonus tasks.
+
+
 1. Currently, the implementation only supports files that are a **multiple of 26-bits in size**. Therefore, a file that is 270 bits long is not supported (...for example).\
 Supporting this was regarded as bonus and we opted not to do so :(
 
-2. If the computers are not under the same `NAT`, in order to run this project, you would have to forward the traffic directly between the devices using port-forwarding. During the implementation and testing phase we assumed that the project will be tested on machines that are on the same network and are connected to the same switch.
+2. The random noise implementation iterates over all the bits, calling the `rand` function for each bit. There was a bonus to implement this with a single `rand` call, and we thought about doing it by generating a sufficiently large number and flipping bits according to it's bit-representation, but ultimately we decided to skip the bonus and focus our attention on the main parts of the project.
+
+3. If the computers are not under the same NAT, in order to run this project, you would have to forward the traffic directly between the devices using port-forwarding. During the implementation and testing phase we assumed that the project will be tested on machines that are on the same network and are connected to the same switch.
 
 _____________
 # TODO
