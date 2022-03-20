@@ -34,9 +34,9 @@ int main(int argc, char* argv[]) {
 
 #ifdef DEBUG
 		printf("[DEBUG] Starting sender with IP %s and port %d\r\n", argv[1], port);
-		printf("[Start] Connected to the Noisy Channel\r\n");
 #endif
 
+		printf("[Start] Connected to the Noisy Channel\r\n");
 		// Get filename from user
 		printf(">: Enter file name (or type quit (...to quit)): ");
 		scanf("%s", &fileNameBuffer);
@@ -46,6 +46,9 @@ int main(int argc, char* argv[]) {
 
 		// Check if the file exists and open it.
 		rfp = fopen(fileNameBuffer, "rb");
+		if (rfp == NULL) {
+			fprintf(stderr, "[ERR] Failed to open file for reading. Exiting.");
+		}
 
 		// Get file size: taken partly from https://codereview.stackexchange.com/questions/112613/memory-safe-file-reading-in-c
 		fseek(rfp, 0, SEEK_END); // get offset at end of file
@@ -57,7 +60,7 @@ int main(int argc, char* argv[]) {
 		if (rfp != NULL) {
 			size_t newLen = fread(fileContentBuffer, sizeof(char), fileSize, rfp);
 			if (ferror(rfp) != 0) {
-				printf("[ERR] Error reading input file, make sure the path is correct. Exiting.");
+				fprintf(stderr, "[ERR] Error reading input file, make sure the path is correct. Exiting.");
 				exit(1);
 			}
 			else {
@@ -66,7 +69,7 @@ int main(int argc, char* argv[]) {
 			fclose(rfp);
 		}
 		else {
-			printf("[ERR] Failed to allocate enough memory for reading the file.\r\nExiting.");
+			fprintf(stderr, "[ERR] Failed to allocate enough memory for reading the file.\r\nExiting.");
 			exit(1);
 		}
 
@@ -77,7 +80,7 @@ int main(int argc, char* argv[]) {
 		int encodedFileSize = (int)(fileSize) * (31.0 / 26.0);
 		char* encodedFileBuffer = (char*)malloc(sizeof(char) * (encodedFileSize)); // allocate enough memory in bytes.
 		if (encodedFileBuffer == NULL) {
-			printf("[ERR] Failed to allocate enough memory for the encoded file buffer.\r\nExiting.");
+			fprintf(stderr, "[ERR] Failed to allocate enough memory for the encoded file buffer.\r\nExiting.");
 			exit(1);
 		}
 		memset(encodedFileBuffer, 0, sizeof(char) * encodedFileSize);

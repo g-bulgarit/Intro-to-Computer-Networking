@@ -50,14 +50,14 @@ SOCKET createSocket(char* ipAddress, int port, int mode, struct sockaddr_in* soc
 	// Init winsockets
 	int wsaRes = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (wsaRes != NO_ERROR) {
-		printf("[ERR] WSAStartup() failed.\r\n");
+		fprintf(stderr, "[ERR] WSAStartup() failed.\r\n");
 		exit(1);
 	}
 
 	// Create actual IPv4 TCP socket for listening
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
 	{
-		printf("[ERR] Failed to create listening socket, error code %d\r\n", WSAGetLastError());
+		fprintf(stderr, "[ERR] Failed to create listening socket, error code %d\r\n", WSAGetLastError());
 		exit(1);
 	}
 
@@ -65,13 +65,13 @@ SOCKET createSocket(char* ipAddress, int port, int mode, struct sockaddr_in* soc
 		// Bind listen socket
 		int retcode = bind(s, (SOCKADDR*)sockStruct, sizeof(*sockStruct));
 		if (retcode) {
-			printf("[ERR] Failed to bind socket, perhaps the specified port is taken?");
+			fprintf(stderr, "[ERR] Failed to bind socket, perhaps the specified port is taken?");
 			exit(1);
 		}
 
 		int canListen = listen(s, 1);
 		if (canListen) {
-			printf("[ERR] Failed to open a listening connection on the socket");
+			fprintf(stderr, "[ERR] Failed to open a listening connection on the socket");
 			exit(1);
 		}
 	}
