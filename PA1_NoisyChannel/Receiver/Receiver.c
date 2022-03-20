@@ -29,14 +29,14 @@ SOCKET createSocket(char* ipAddress, int port, int mode, struct sockaddr_in* soc
 	// Init winsockets
 	int wsaRes = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (wsaRes != NO_ERROR) {
-		printf("[ERR] WSAStartup() failed.\r\n");
+		fprintf(stderr, "[ERR] WSAStartup() failed.\r\n");
 		exit(1);
 	}
 
 	// Create actual IPv4 TCP socket for listening
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
 	{
-		printf("[ERR] Failed to create listening socket, error code %d\r\n", WSAGetLastError());
+		fprintf(stderr, "[ERR] Failed to create listening socket, error code %d\r\n", WSAGetLastError());
 		exit(1);
 	}
 
@@ -44,13 +44,13 @@ SOCKET createSocket(char* ipAddress, int port, int mode, struct sockaddr_in* soc
 		// Bind listen socket
 		int retcode = bind(s, (SOCKADDR*)sockStruct, sizeof(*sockStruct));
 		if (retcode) {
-			printf("[ERR] Failed to bind socket, perhaps the specified port is taken?");
+			fprintf(stderr, "[ERR] Failed to bind socket, perhaps the specified port is taken?");
 			exit(1);
 		}
 
 		int canListen = listen(s, 1);
 		if (canListen) {
-			printf("[ERR] Failed to open a listening connection on the socket");
+			fprintf(stderr, "[ERR] Failed to open a listening connection on the socket");
 			exit(1);
 		}
 	}
@@ -78,6 +78,8 @@ void flipBit(char* buffer, int index) {
 }
 
 int checkControlBit(char* messageBuffer, int blockOffset, int* bitPositions, int arrayLength) {
+	// Function to check the pairity of the bits in the indecies specified in the int* bitPositions.
+	// Returns the calculated pairity.
 	int pairity = 0;
 	for (int i = 0; i < arrayLength; i++)
 	{
@@ -137,11 +139,15 @@ void unhamming(char* recievedMessageBuffer, char* decodedFileBuffer, int message
 		int error15 =	checkControlBit(recievedMessageBuffer, blockNumber, controlBit15_Bits, 16);
 		int errorLocation = -1;
 		if (error0 || error1 || error3 || error7 || error15) {
+#ifdef DEBUG
 			printf("[Hamming Decode] Found an error at (encoded) block %d!\r\n", blockNumber / 31);
+#endif
 			errorLocation = findFlippedBit(error0, error1, error3, error7, error15);
 			flipBit(recievedMessageBuffer, blockNumber + errorLocation);
 			*fixedBits += 1;
+#ifdef DEBUG
 			printf("[Hamming Decode] Flipped bit %d block %d!\r\n", errorLocation, blockNumber / 31);
+#endif
 		}
 
 		// Set data bits to correct places in the decoded file buffer
@@ -192,55 +198,65 @@ int main(int argc, char* argv[]) {
 	printf("-------[RECIEVER]------- \r\n\r\n");
 	// Check for cmdline args
 	if (argc != 3) {
-		printf("[ERR] Please provide all required command-line arguments.\r\n Reciever.exe <ip_address> <port>\r\n");
+		fprintf(stderr, "[ERR] Please provide all required command-line arguments.\r\n Reciever.exe <ip_address> <port>\r\n");
 		exit(1);
 	}
 
 	// Set up connection details
 	int port = atoi(argv[2]);
-	//char* ipAddr = argv[1];
 	struct sockaddr_in server;
 
 	SOCKET rxSocket;
 
 	// Setup recv buffer
 	char* recvBuf = (char*)malloc(sizeof(char) * MSG_SIZE);
-	printf("[Start] Started socket, connecting to the noisy channel\r\n");
+	if (recvBuf == NULL) {
+		fprintf(stderr, "[ERR] Failed to allocate space for the recieve-buffer. Exiting.");
+		exit(1);
+	}
+
+	printf("[INFO] Started socket, connecting to the noisy channel...\r\n");
 
 	while (1) {
 		rxSocket = createSocket(argv[1], port, SEND, &server);
 		int c = sizeof(struct sockaddr_in);
 		int recievedMessageSize = 0;
 		int connectRetcode = connect(rxSocket, (SOCKADDR*)&server, sizeof(server));
+		printf("[INFO] Connected successfully, waiting to recieved a message.\r\n");
 		recievedMessageSize = recv(rxSocket, recvBuf, MSG_SIZE, 0);
 
 		recvBuf = (char*)realloc(recvBuf, recievedMessageSize + 1);
 		recvBuf[recievedMessageSize + 1] = '\0';
 
 		if (recievedMessageSize) {
-			printf("[Success] Recieved %d bytes\r\n", recievedMessageSize);
-			printf("[Success] Recieved:\r\n%s\r\n", recvBuf);
+			printf("[INFO] Recieved %d bytes\r\n", recievedMessageSize);
+#ifdef DEBUG
+			printf("[INFO] Recieved:\r\n%s\r\n", recvBuf);
+#endif
 		}
 
 		// Decode the file here
 		int decodedFileSize = recievedMessageSize * (26.0 / 31.0);
 		char* decodedFileBuffer = (char*)malloc(sizeof(char) * decodedFileSize + 1);
 		if (decodedFileBuffer == NULL) {
+			fprintf(stderr, "[ERR] Failed to allocate space for the decoded message buffer. Exiting");
 			exit(1);
-			// todo print
 		}
+
 		// Set entire buffer to 0.
 		memset(decodedFileBuffer, 0, sizeof(char) * decodedFileSize + 1);
 
 		unhamming(recvBuf, decodedFileBuffer, recievedMessageSize, &fixedBits);
 		decodedFileBuffer[decodedFileSize + 1] = '\0';
 		printf("[Decode] Decoded %d bytes\r\n", decodedFileSize);
-		printf("[Decode] Decoded:\r\n%s\r\n", decodedFileBuffer);
 		printf("[Decode] Overall, fixed %d bits\r\n", fixedBits);
+#ifdef DEBUG
+		printf("[Decode] Decoded:\r\n%s\r\n", decodedFileBuffer);
+#endif
 
 
 		// Save the file with the help of some user input
-		printf(">: Enter filename: ");
+		printf("\r\n>: Enter filename: ");
 		scanf("%s", &fileNameBuffer);
 		wfp = fopen(fileNameBuffer, "wb+");
 		fwrite(decodedFileBuffer, 1, decodedFileSize, wfp);
