@@ -25,9 +25,10 @@ int main(int argc, char* argv[]) {
 	int port = atoi(argv[2]);
 	SOCKET txSocket;
 	struct sockaddr_in remote;
+	// Create the TX socket
 	
 	while (!stopUserInput) {
-		// Connect to server socket
+		// Connect to server (channel)
 		txSocket = createSocket(argv[1], port, SEND, &remote);
 		int listen_retcode = connect(txSocket, (SOCKADDR*)&remote, sizeof(remote));
 
@@ -90,7 +91,11 @@ int main(int argc, char* argv[]) {
 
 		free(fileContentBuffer); // Free used memory for the original file
 		free(encodedFileBuffer); // Free used memory for the encoded file
+
+		// Close the TX socket
 		closesocket(txSocket);
 	}
+
+	
 	return 0;
 }

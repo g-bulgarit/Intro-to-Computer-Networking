@@ -149,20 +149,18 @@ int main(int argc, char* argv[]) {
 	int senderPort = 0;
 	int recieverPort = 0;
 	
+	// Main action loop - create sockets for listening to the sender and reciever.
+	SOCKET listenToSender =		createSocket(&localIP, 0, LISTEN, &sSender,		&senderPort);
+	SOCKET listenToReceiver =	createSocket(&localIP, 0, LISTEN, &sReceiver,	&recieverPort);
+	printf("[INFO] Started listening to the recieve socket, waiting for sender\r\n");
+	printf("[INFO] This machine's IP is %s\r\n", inet_ntoa(localIP));
+	printf("[INFO] \tSet sender target to IP:\t%s,\tport:%d\r\n", inet_ntoa(localIP), senderPort);
+	printf("[INFO] \tSet reciever target to IP:\t%s,\tport:%d\r\n", inet_ntoa(localIP), recieverPort);
+#ifdef DEBUG
+	printf("[DEBUG] Noise flag %s, amt %d, seed %d\r\n", flag, noiseAmt, randomNoiseSeed);
+#endif
 
 	while (1) {
-		// Main action loop - create sockets for listening to the sender and reciever.
-		SOCKET listenToSender =		createSocket(&localIP, 0, LISTEN, &sSender,		&senderPort);
-		SOCKET listenToReceiver =	createSocket(&localIP, 0, LISTEN, &sReceiver,	&recieverPort);
-
-		printf("[INFO] Started listening to the recieve socket, waiting for sender\r\n");
-		printf("[INFO] This machine's IP is %s\r\n", inet_ntoa(localIP));
-		printf("[INFO] \tSet sender target to IP:\t%s,\tport:%d\r\n", inet_ntoa(localIP), senderPort);
-		printf("[INFO] \tSet reciever target to IP:\t%s,\tport:%d\r\n", inet_ntoa(localIP), recieverPort);
-	#ifdef DEBUG
-		printf("[DEBUG] Noise flag %s, amt %d, seed %d\r\n", flag, noiseAmt, randomNoiseSeed);
-	#endif
-		
 		// Allocate (too much) memory for message
 		char* recvBuf = (char*)malloc(sizeof(char) * MSG_SIZE);
 		if (recvBuf == NULL) {

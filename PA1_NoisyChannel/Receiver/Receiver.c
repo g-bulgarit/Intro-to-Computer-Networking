@@ -202,19 +202,17 @@ int main(int argc, char* argv[]) {
 	struct sockaddr_in server;
 
 	SOCKET rxSocket;
-	rxSocket = createSocket(argv[1], port, SEND, &server);
 
 	// Setup recv buffer
 	char* recvBuf = (char*)malloc(sizeof(char) * MSG_SIZE);
 	printf("[Start] Started socket, connecting to the noisy channel\r\n");
 
 	while (1) {
+		rxSocket = createSocket(argv[1], port, SEND, &server);
 		int c = sizeof(struct sockaddr_in);
 		int recievedMessageSize = 0;
 		int connectRetcode = connect(rxSocket, (SOCKADDR*)&server, sizeof(server));
 		recievedMessageSize = recv(rxSocket, recvBuf, MSG_SIZE, 0);
-
-		printf("\r\n Passed RECV");
 
 		recvBuf = (char*)realloc(recvBuf, recievedMessageSize + 1);
 		recvBuf[recievedMessageSize + 1] = '\0';
@@ -247,9 +245,8 @@ int main(int argc, char* argv[]) {
 		wfp = fopen(fileNameBuffer, "wb+");
 		fwrite(decodedFileBuffer, 1, decodedFileSize, wfp);
 		fclose(wfp);
-		closesocket(rxSocket);
 		fixedBits = 0;
+		closesocket(rxSocket);
 	}
-
 	return 0;
 }
