@@ -17,7 +17,7 @@
 #define BYTE_SIZE_IN_BITS 8
 #define HOSTNAME_LEN 300
 
-#define DEBUG
+// #define DEBUG
 
 #define LISTEN			1
 #define SEND			2
@@ -184,7 +184,7 @@ int main(int argc, char* argv[]) {
 		recvBuf[recievedMessageSize + 1] = '\0';
 
 		if (recievedMessageSize) {
-			printf("\r\n>: Recieved %d bytes: \r\n%s\r\n", recievedMessageSize, recvBuf);
+			printf("\r\n>: Recieved %d bytes: \r\n", recievedMessageSize);
 		}
 		closesocket(sockSender);
 
