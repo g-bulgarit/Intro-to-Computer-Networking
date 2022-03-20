@@ -1,11 +1,40 @@
 # Programming Assignment 1: **Noisy Channel**
+Submitted by:
+* Alon Budker - id
+* Itay Zilka - id
 
+Github: [Repository link](https://github.com/g-bulgarit/Intro-to-Computer-Networking/tree/main/PA1_NoisyChannel)
+
+________________
+# Documentation
 ## **Overview**
 in this assignment, we were tasked with transferring a message across a noisy channel.
 The goal was to retrieve the message, and fix single-bit errors using `(26, 31, 3)-hamming` code.
 
 The code is written in `C` with the use of `winsock` for using sockets on windows machines.
 A lot of the basic principles were taken from [binarytides WinSockets tutorial](https://www.binarytides.com/winsock-socket-programming-tutorial/), other references are marked in the corresponding places in the source code.
+
+## **Challanges:**
+### **Sockets**
+This was the first time we worked with sockets, so the introduction was a bit rough, but after a few prototyping stages we reached a point where we became confident with our implementation of sockets and we were easily able to extend it to support new functionality.
+
+### **Hamming**
+We were very surprised when we noticed that there isn't an open-source implementation of `hamming(26,31,3)` as a library or just as example code. In retrospect, it makes sense, since it is probably more beneficial to implement hamming encoding in hardware, and there are more advaned codes that are in use today.
+
+The hamming encoding and decoding part of the excercise is the code that we are least proud of. The implementation is ugly and very straight-forward, with direct bit manipulation spanning across many lines.
+
+To actually implement it, we made use of helper functions that gave us **bit**-access to our data, by using some bitwise math.
+
+Additionally, we implemented the hamming code with a -1 offset to the left, as it was more comfortable (from a coding prespective) to start enumerating the bits from `0` instead of `1`, and thus in our implementation, the first bit is actually the `0-th` bit.
+
+### **Fetching random ports**
+We left this part for last, as it was easier to develop the entire project around hard-coded values for ports and IPs, and this change is very local anyway.
+
+We used the `bind()` function with the `port` parameter as `0`, which forces the OS to choose an unused port (usualy in the `> 60000` range).
+
+This worked, but in order to actually use this value in the sender and receiver, we had to fetch the selected port and display it.
+
+In order to do that, we used the function `getsockname` to load the new socket's data and fetch the port.
 
 ## **How to run:**
 1. Run `Channel.exe` first. \
@@ -16,6 +45,7 @@ A lot of the basic principles were taken from [binarytides WinSockets tutorial](
 2. `Channel.exe` will output params like the IP address and the port for the sender and receiver programs.
 3. Feed these params to `Sender.exe <IP> <port>` and `Receiver.exe <IP> <port>`.
 4. Follow the instructions on screen, as specified in the assignment handout.
+5. On consequitive runs, please make sure to say **yes** to the prompt in `Channel.exe` before proceeding with the other programs.
 
 ## **Example run-through**:
 ### In `Channel.exe`:
@@ -83,7 +113,13 @@ A lot of the basic principles were taken from [binarytides WinSockets tutorial](
 [Decode] Overall, fixed 139 bits
 ```
 
+## **Limitations**
+1. Currently, the implementation only supports files that are a **multiple of 26-bits in size**. Therefore, a file that is 270 bits long is not supported (...for example).\
+Supporting this was regarded as bonus and we opted not to do so :(
+
+2. If the computers are not under the same `NAT`, in order to run this project, you would have to forward the traffic directly between the devices using port-forwarding. During the implementation and testing phase we assumed that the project will be tested on machines that are on the same network and are connected to the same switch.
+
 _____________
 # TODO
-* [ ] Make infinite loop
+* [x] Make infinite loop
 * [ ] Clean up prints, move to `stderr` instead of `stdout`
