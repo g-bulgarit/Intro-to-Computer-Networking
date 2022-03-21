@@ -1,7 +1,8 @@
 #include "helperFunctions.h"
 
-// For development, remove before submitting TODO
-#define DEBUG
+// Code for the sender application, that takes in a file specified by the user (limitation - the file size must be a multiple of 26 bits)
+// and transfers it over a noisy channel to a receiver application.
+// To overcome the noise - the sender encodes the data using hamming(26, 31, 3) and the receiver decodes it.
 
 int main(int argc, char* argv[]) {
 
@@ -36,7 +37,7 @@ int main(int argc, char* argv[]) {
 		printf("[DEBUG] Starting sender with IP %s and port %d\r\n", argv[1], port);
 #endif
 
-		printf("[Start] Connected to the Noisy Channel\r\n");
+		printf("[INFO] Connected to the Noisy Channel\r\n");
 		// Get filename from user
 		printf(">: Enter file name (or type quit (...to quit)): ");
 		scanf("%s", &fileNameBuffer);
@@ -90,7 +91,7 @@ int main(int argc, char* argv[]) {
 
 		// Send the data through the socket
 		int sent_bytes = send(txSocket, encodedFileBuffer, encodedFileSize, 0);
-		printf(">: Sent: %d bytes\n", sent_bytes);
+		printf("[INFO] Sent: %d bytes\n", sent_bytes);
 
 		free(fileContentBuffer); // Free used memory for the original file
 		free(encodedFileBuffer); // Free used memory for the encoded file

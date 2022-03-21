@@ -1,5 +1,7 @@
 #include "receiverFunctions.h"
 
+// Code for the receiver application, that gets a file from a noisy channel and decodes it with hamming(26, 31, 3). 
+// Hopefully, there aren't too many flipped bits, and the message can be recovered in full.
 
 int main(int argc, char* argv[]) {
 	FILE* wfp;
@@ -58,10 +60,10 @@ int main(int argc, char* argv[]) {
 
 		unhamming(recvBuf, decodedFileBuffer, recievedMessageSize, &fixedBits);
 		//decodedFileBuffer[decodedFileSize + 1] = '\0';
-		printf("[Decode] After decoding, left with %d bytes\r\n", decodedFileSize);
-		printf("[Decode] Overall, fixed %d flipped bits\r\n", fixedBits);
+		printf("[INFO] After decoding, left with %d bytes\r\n", decodedFileSize);
+		printf("[INFO] Overall, fixed %d flipped bits\r\n", fixedBits);
 #ifdef DEBUG
-		printf("[Decode] Decoded:\r\n%s\r\n", decodedFileBuffer);
+		printf("[INFO] Decoded:\r\n%s\r\n", decodedFileBuffer);
 #endif
 
 

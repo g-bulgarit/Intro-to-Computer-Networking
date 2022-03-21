@@ -1,5 +1,11 @@
 #include "channelFunctions.h"
 
+// Code for the channel application, that acts as a server for both the receiver and the sender.
+// The channel can transfer the messages from one to another, but it can also add one of two types of noise:
+//		Random noise - for each bit, flips bit with some probability
+//		Deterministic noise - flip every n-th bit
+
+
 int main(int argc, char* argv[]) {
 	// Check for cmdline args
 	char* flag = "";
