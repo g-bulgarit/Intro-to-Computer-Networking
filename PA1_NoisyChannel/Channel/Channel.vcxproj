@@ -152,6 +152,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Channel.c" />
+    <ClCompile Include="channelFunctions.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="channelFunctions.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

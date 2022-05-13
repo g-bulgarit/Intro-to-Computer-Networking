@@ -151,7 +151,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="helperFunctions.c" />
     <ClCompile Include="Sender.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="helperFunctions.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
