@@ -1,7 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
+#include <string.h>
 
 #include "Networking.h"
+#include "dnsInfra.h"
 #define USER_BUFFER_SIZE 1024
 
 
@@ -32,15 +34,20 @@ int main() {
 		if (!strcmp(userText, "quit"))
 			exit(0);
 
+		// Create DNS packet
+		dnsPacket* dnsPacket = createDnsPacket(userText, strlen(userText));
+
 		// TODO: Get DNS server IP from argv
 		initUDP(placeholderIpAddr, 53);
 
-		char* msg = "test";
-		int sentBytes = sendUDP(msg, sizeof(msg));
+		// ...and send it
+		int sentBytes = sendUDP((char*)dnsPacket->head, dnsPacket->size);
 
+		// Listen for DNS result
 		int receivedBytes = 0;
-		receiveUDP(&receivedBytes);
-		printf("\nReceived bytes: %d", receivedBytes);
-		
+		char* dnsResult = receiveUDP(&receivedBytes);
+		printf("\nReceived bytes: %d\n", receivedBytes);
+
+		// Parse the result (TODO)
 	}
 }
