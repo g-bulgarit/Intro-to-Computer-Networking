@@ -39,10 +39,10 @@ void initUDP(char *serverIpAddr, unsigned int serverPort)
 	netSocket.sin_addr.s_addr = inet_addr(serverIpAddr);
 	netSocket.sin_port = htons(serverPort);
 
-	// Set timeout parameters
-	struct timeval timevalue;
-	timevalue.tv_sec = TIMEOUT_SECONDS;
-	timevalue.tv_usec = 0;
+	//// Set timeout parameters
+	//struct timeval timevalue;
+	//timevalue.tv_sec = TIMEOUT_SECONDS;
+	//timevalue.tv_usec = 0;
 	
 
 	// Create actual socket
@@ -52,10 +52,10 @@ void initUDP(char *serverIpAddr, unsigned int serverPort)
 		return;
 	}
 
-	// Push timeout to socket
-	if (setsockopt(sendSocket, SOL_SOCKET, SO_RCVTIMEO, &timevalue, sizeof(timevalue)) < 0) {
-		perror("error: Failed to set timeout!");
-	}
+	//// Push timeout to socket
+	//if (setsockopt(sendSocket, SOL_SOCKET, SO_RCVTIMEO, &timevalue, sizeof(timevalue)) < 0) {
+	//	perror("error: Failed to set timeout!");
+	//}
 
 	// Connect to the DNS server specified
 	if (connect(sendSocket, (const struct sockaddr *)&netSocket, sizeof(netSocket)) != 0)
