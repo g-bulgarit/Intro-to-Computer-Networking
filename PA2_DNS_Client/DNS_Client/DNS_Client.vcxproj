@@ -19,10 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="dnsInfra.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="Networking.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="dnsInfra.h" />
     <ClInclude Include="Networking.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
