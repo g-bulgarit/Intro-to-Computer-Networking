@@ -7,29 +7,81 @@
 
 typedef struct
 {
+	/*
+									1  1  1  1  1  1
+	  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                      ID                       |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|QR|   Opcode  |AA|TC|RD|RA|   Z    |   RCODE   |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                    QDCOUNT                    |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                    ANCOUNT                    |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                    NSCOUNT                    |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                    ARCOUNT                    |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	*/
 	unsigned int id;
-	unsigned int flags;
-	unsigned int qdcount; // question amt
-	unsigned int ancount; // answer amt
-	unsigned int nscount; // nameserver amt
-	unsigned int arcount; // records amt 
+	unsigned int flags;   // entire 2nd line, containing QR, opcode, AA, TC, RD, RA, Z, R-code
+	unsigned int qdcount; // question amount indicator
+	unsigned int ancount; // answer amount indicator
+	unsigned int nscount; // nameserver amount indicator
+	unsigned int arcount; // records amount indicator 
 } dnsHeader;
 
 typedef struct
 {
-	char qname[1];
-	unsigned int qtype;
-	unsigned int qclass;
+	/*
+	                                1  1  1  1  1  1
+      0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    |                                               |
+    /                     QNAME                     /
+    /                                               /
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    |                     QTYPE                     |
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    |                     QCLASS                    |
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	*/
+	char qname[1];			// This will contain the correctly formatted domain name, space will be allocated later
+	unsigned int qtype;		// Query type, almost always 1 in our case
+	unsigned int qclass;	// Question class, almost always 1 in our case
 } dnsQuestion;
 
 typedef struct
 {
-	char name[1];
+	/*
+	                                1  1  1  1  1  1
+      0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    |                                               |
+    /                                               /
+    /                      NAME                     /
+    |                                               |
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    |                      TYPE                     |
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    |                     CLASS                     |
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    |                      TTL                      |
+    |                                               |
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    |                   RDLENGTH                    |
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--|
+    /                     RDATA                     /
+    /                                               /
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	*/
+	char name[1];			// This will contain the correctly formatted domain name, space will be allocated later!
 	unsigned int type;
 	unsigned int u_class;
 	unsigned int ttl;
 	unsigned int rdlength;
-	unsigned rdata[1];
+	unsigned rdata[1];		// This will contain the returned data, space will be allocated later!
 } dnsResource;
 
 
