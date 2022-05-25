@@ -8,7 +8,7 @@
 
 
 int main() {
-	char* placeholderIpAddr = "8.8.8.8"; // placeholder for cmd line args
+	char* placeholderIpAddr = "62.219.186.7"; // placeholder for cmd line args
 
 	// 1. Get user input for IP of DNS server, default to 8.8.8.8 FROM COMMAND LINE!
 	// 2. User-logic-loop:
@@ -24,6 +24,11 @@ int main() {
 
 	// Definitions
 	char userText[USER_BUFFER_SIZE];
+	int messageId = 0xa123;
+	int receivedBytes;
+
+	dnsPacket* dnsMessage;
+	dnsPacket* dnsResponsePacket;
 
 	// Main loop: prompt user to interact
 	while (1) {
@@ -35,16 +40,16 @@ int main() {
 			exit(0);
 
 		// Create DNS packet
-		dnsPacket* dnsPacket = createDnsPacket(userText, strlen(userText));
+		dnsMessage = createDnsPacket(userText, strlen(userText), &messageId);
 
 		// TODO: Get DNS server IP from argv
 		initUDP(placeholderIpAddr, 53);
 
 		// ...and send it
-		int sentBytes = sendUDP((char*)dnsPacket->head, dnsPacket->size);
+		int sentBytes = sendUDP((char*)dnsMessage->head, dnsMessage->size);
 
 		// Listen for DNS result
-		int receivedBytes = 0;
+		
 		char* dnsResult = receiveUDP(&receivedBytes);
 		printf("\nReceived bytes: %d\n", receivedBytes);
 

@@ -75,7 +75,7 @@ int addDnsQueryToMsg(dnsPacket *dns, char *qdomain, unsigned int qdomainSize, un
 	dns->qdSize += qdSize;
 
 	// If the dns packet is already built, move everything forward to have space for the domain
-	memcpy((void *)((int)(&qdBase->qtype) + (int)(qnameActualSize)), &qdBase->qtype, (sizeof(qdBase->qtype) + sizeof(qdBase->qclass)));
+	memcpy((void *)((DWORD_PTR)(&qdBase->qtype) + (DWORD_PTR)(qnameActualSize)), &qdBase->qtype, (sizeof(qdBase->qtype) + sizeof(qdBase->qclass)));
 
 	// split domain name to fit DNS protocal specification
 	splitDomainName(qdomain, qdBase->qname);
@@ -96,23 +96,25 @@ void dnsHostToNetwork(dnsPacket *dns)
 
 
 dnsPacket* createDnsPacket(char* domainName, int domainLength)
+dnsPacket* createDnsPacket(char* domainName, int domainLength, int* messageId)
 {
 	// Build the actual packet
 	dnsPacket* dnsPack;
 	dnsHeader* dnsHead;
 	unsigned int headerSize = sizeof(dnsHeader);
 
-	dnsPack = (dnsPacket*)malloc(sizeof(dnsPacket));
-	dnsHead = (dnsHeader*)malloc(headerSize);
+	dnsPack = (dnsPacket*)calloc(1, sizeof(dnsPacket));
+	dnsHead = (dnsHeader*)calloc(1, headerSize);
 
-	// Initiall, the DNS packet size is just the header
+	// Initially, the DNS packet size is just the header
 	dnsPack->head = dnsHead;
 	dnsPack->size = headerSize;
 
-	dnsPack->head->flags |= 0x0100;  // Use RD flag (recursion desired)
+	dnsPack->head->flags = 0x0100;  // Use RD flag (recursion desired)
 
 	// set the required header fields
-	dnsPack->head->id = 1;
+	dnsPack->head->id = *messageId;
+	(*messageId)++; // Increment the mesasge ID for next time.
 
 	// Add query
 	addDnsQueryToMsg(dnsPack, domainName, domainLength, 1, 1);
