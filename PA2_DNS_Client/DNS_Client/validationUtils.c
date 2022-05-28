@@ -30,6 +30,9 @@ int isNumber(char *str)
 
 int ipValidate(char *ip) // Check if the IP is valid
 {
+	// Validate given DNS server IP address, 
+	// kill program if the IP address is invalid.
+
 	int num, dots = 0;
 	char* test = ip;
 	char *ptr;
@@ -74,18 +77,15 @@ int ipValidate(char *ip) // Check if the IP is valid
 
 
 int checkDomain(char* domain) {
-	// Check URL validity based on RFC https://www.rfc-editor.org/rfc/rfc3986#section-2
-	// Todos:
+	// Check URL validity based on RFC https://www.rfc-editor.org/rfc/rfc3986#section-1.1.1
 	//	1. Check atleast 1 dot and no more than 1 dot in a row.
 	//	2. Check that the domain name is not longer than 255 characters - This is automatically true becuase of our
 	//	   input buffer size, which is 255
 
 
-	// https:// | http://
 	int retval = 1;
 	int stringLength = strlen(domain);
 
-	// Check if there is atleast one '.' or more than one dot in a row --------
 	int numDots = 0;
 	int currentSeenDot = 50;	// Magic numbers
 	int prevSeenDot = 100;
@@ -107,9 +107,5 @@ int checkDomain(char* domain) {
 		retval = 0;
 	}
 	
-	// -------------------------------------------------------------------------
-
-
 	return retval;
-
 }

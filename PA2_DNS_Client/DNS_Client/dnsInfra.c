@@ -121,13 +121,15 @@ struct hostent* dnsQuery(unsigned char *domainName)
 
 #ifdef DEBUG
 		printf("[DEBUG] answers: %d\n", ntohs(dns->ans_count));
-		printf("[DEBUG] auth servers: %d\n", ntohs(dns->auth_count));
 #endif
 
-		// TODO: Check if we need to fill aliases and name here
-		// Fill the hostent struct
-		dnsResponse->h_name = NULL;
-		dnsResponse->h_aliases = NULL;
+		// Fill the hostent struct:
+		//	Regarding name and aliases, we just put the original domain name
+		//	and assummed IPv4 address only in the addrtype field.
+		//	Everything else matches the hostent struct.
+
+		dnsResponse->h_name = domainName;
+		dnsResponse->h_aliases = domainName;
 		dnsResponse->h_addrtype = AF_INET;
 		dnsResponse->h_length = 4;
 		dnsResponse->h_addr_list = foundIpAddrList;
