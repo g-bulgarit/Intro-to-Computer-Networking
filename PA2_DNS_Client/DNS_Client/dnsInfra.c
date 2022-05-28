@@ -5,8 +5,9 @@
 // Global parameter for incrementing the message ID for the DNS packets
 int globalMessageId = 0;
 
-struct hostent* dnsQuery(unsigned char *domainName)
+int dnsQuery(unsigned char *domainName)
 {
+	int successFlag = 1;
 	// Function to create a DNS packet according to the RFC specification and use it
 	// to query a DNS server and parse it's response.
 
@@ -35,8 +36,8 @@ struct hostent* dnsQuery(unsigned char *domainName)
 	// Send DNS packet to the specified DNS server
 	if (sendto(sendSocket, (char*)buf, sizeof(dnsHeader) + (strlen((const char*)dnsDomainName) + 1) + sizeof(dnsQuestion), 0, (struct sockaddr*)&netSocket, sizeof(netSocket)) == SOCKET_ERROR)
 	{
-		printf("[ERROR] Failed to send.\nError Code: %d", WSAGetLastError());
-		exit(-1);
+		printf("[ERROR] Failed to send.\nError Code: %d\n", WSAGetLastError());
+		successFlag = 0;
 	}
 
 	sizeSocket = sizeof(netSocket);
@@ -46,12 +47,12 @@ struct hostent* dnsQuery(unsigned char *domainName)
 	{
 		int errCode = WSAGetLastError();
 		if (errCode == 10060) {
-			printf("[ERROR] Request timed out after %d seconds - Error Code: %d", TIMEOUT_MILLISECONDS / 1000, errCode);
-			exit(-1);
+			printf("[ERROR] Request timed out after %d seconds - Error Code: %d\n", TIMEOUT_MILLISECONDS / 1000, errCode);
+			successFlag = 0;
 		}
 		else {
-			printf("[ERROR] Failed to receive.\nError Code: %d", errCode);
-			exit(-1);
+			printf("[ERROR] Failed to receive.\nError Code: %d\n", errCode);
+			successFlag = 0;
 		}
 	}
 
@@ -61,61 +62,75 @@ struct hostent* dnsQuery(unsigned char *domainName)
 	readPtr = &buf[sizeof(dnsHeader) + (strlen((const char*)dnsDomainName) + 1) + sizeof(dnsQuestion)];
 	stoppingPtr = 0;
 
-	// Start going over all answers
-	for (i = 0; i < ntohs(dns->ans_count); i++)
+	// Check if we didnt get an answer:
+	if (ntohs(dns->ans_count) == 0) {
+		printf("[ERROR] NONEXISTENT\n");
+		successFlag = 0;
+	}
+
+
+	if (successFlag == 1)
 	{
-		// For each answer in the DNS response,
-		dnsReponses[i].name = dnsToDomainFormat(readPtr, buf, &stoppingPtr);	//Convert name to DNS packet format
-		readPtr += stoppingPtr;
-
-		// Add to resource
-		dnsReponses[i].resourceStruct = (resData*)(readPtr);
-		readPtr += sizeof(resData);
-
-		if (ntohs(dnsReponses[i].resourceStruct->type) == 1 && ntohs(dnsReponses[i].resourceStruct->_class) == 1) // Look at *responses* only
+		// Start going over all answers
+		for (i = 0; i < ntohs(dns->ans_count); i++)
 		{
-			// Allocate room for the resource struct
-			dnsReponses[i].resourceData = (unsigned char*)malloc(ntohs(dnsReponses[i].resourceStruct->data_len));
-			for (j = 0; j < ntohs(dnsReponses[i].resourceStruct->data_len); j++)
-				dnsReponses[i].resourceData[j] = readPtr[j];
-
-			// Add null byte to terminate the reposnse string
-			dnsReponses[i].resourceData[ntohs(dnsReponses[i].resourceStruct->data_len)] = '\0';
-			readPtr += ntohs(dnsReponses[i].resourceStruct->data_len);
-		}
-		else // Skip
-		{
-			dnsReponses[i].resourceStruct = dnsToDomainFormat(readPtr, buf, &stoppingPtr);
+			// For each answer in the DNS response,
+			dnsReponses[i].name = dnsToDomainFormat(readPtr, buf, &stoppingPtr);	// Convert name to DNS packet format
 			readPtr += stoppingPtr;
-		}
-	}
 
-	// Construct a list of a IP addresses
-	int addrAmt = 0;
-	for (i = 0; i < ntohs(dns->ans_count); i++)
-	{
-		if (ntohs(dnsReponses[i].resourceStruct->type) == 1) // Look at *responses* only
-		{
-			long *p;
-			p = (long*)dnsReponses[i].resourceData;
-			foundIpAddrList[0][addrAmt] = p;
-			addrAmt++;
+			// Add to resource
+			dnsReponses[i].resourceStruct = (resData*)(readPtr);
+			readPtr += sizeof(resData);
+
+			if (ntohs(dnsReponses[i].resourceStruct->type) == 1 && ntohs(dnsReponses[i].resourceStruct->_class) == 1) // Look at *responses* only
+			{
+				// Allocate room for the resource struct
+				dnsReponses[i].resourceData = (unsigned char*)malloc(ntohs(dnsReponses[i].resourceStruct->data_len));
+				for (j = 0; j < ntohs(dnsReponses[i].resourceStruct->data_len); j++)
+					dnsReponses[i].resourceData[j] = readPtr[j];
+
+				// Add null byte to terminate the reposnse string
+				dnsReponses[i].resourceData[ntohs(dnsReponses[i].resourceStruct->data_len)] = '\0';
+				readPtr += ntohs(dnsReponses[i].resourceStruct->data_len);
+			}
+			else // Skip
+			{
+				dnsReponses[i].resourceStruct = dnsToDomainFormat(readPtr, buf, &stoppingPtr);
+				readPtr += stoppingPtr;
+			}
 		}
-	}
+
+		// Construct a list of a IP addresses
+		int addrAmt = 0;
+		for (i = 0; i < ntohs(dns->ans_count); i++)
+		{
+			if (ntohs(dnsReponses[i].resourceStruct->type) == 1) // Look at *responses* only
+			{
+				long *p;
+				p = (long*)dnsReponses[i].resourceData;
+				foundIpAddrList[0][addrAmt] = p;
+				addrAmt++;
+			}
+		}
 
 #ifdef DEBUG
-	printf("[DEBUG] answers: %d\n", ntohs(dns->ans_count));
-	printf("[DEBUG] auth servers: %d\n", ntohs(dns->auth_count));
+		printf("[DEBUG] answers: %d\n", ntohs(dns->ans_count));
+		printf("[DEBUG] auth servers: %d\n", ntohs(dns->auth_count));
 #endif
 
-	// TODO: Check if we need to fill aliases and name here
-	// Fill the hostent struct
-	dnsResponse->h_name = NULL;
-	dnsResponse->h_aliases = NULL;
-	dnsResponse->h_addrtype = AF_INET;
-	dnsResponse->h_length = 4;
-	dnsResponse->h_addr_list = foundIpAddrList;
-	return dnsResponse;
+		// TODO: Check if we need to fill aliases and name here
+		// Fill the hostent struct
+		dnsResponse->h_name = NULL;
+		dnsResponse->h_aliases = NULL;
+		dnsResponse->h_addrtype = AF_INET;
+		dnsResponse->h_length = 4;
+		dnsResponse->h_addr_list = foundIpAddrList;
+
+		// Set this as the retval
+		dnsQueryResult = dnsResponse;
+	}
+	return successFlag;
+
 }
 
 void setDnsQueryParams(dnsHeader* dns, int* idCounter) {

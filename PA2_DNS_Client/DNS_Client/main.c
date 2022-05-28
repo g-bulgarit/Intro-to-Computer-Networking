@@ -48,10 +48,11 @@ int main(int argc, char* argv[])
 			exit(0);
 		}
 
-		// Parse response
-		struct hostent* dnsResponse = dnsQuery(userText);
-		parsedResult.sin_addr = *(struct in_addr*)dnsResponse->h_addr_list[0];
-		printf("%s \n", inet_ntoa(parsedResult.sin_addr));
+		// Parse response if successfull
+		if (dnsQuery(userText)) {
+			parsedResult.sin_addr = *(struct in_addr*)dnsQueryResult->h_addr_list[0];
+			printf("%s \n", inet_ntoa(parsedResult.sin_addr));
+		}
 
 		// Close socket
 		closeUDPSocket();
