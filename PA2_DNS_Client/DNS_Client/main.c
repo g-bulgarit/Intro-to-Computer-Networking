@@ -1,58 +1,60 @@
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
-#include <stdio.h>
-#include <string.h>
 
-#include "Networking.h"
+#include "winsock2.h"
+#pragma comment(lib,"ws2_32.lib") //Winsock Library
+
 #include "dnsInfra.h"
-#define USER_BUFFER_SIZE 1024
+#include "Networking.h"
+#include "validationUtils.h"
 
+//	Todos:
+//		1. Check IP address validity for the DNS server		[V]
+//		2. Check domain name validity for ther user input	[V]
+//		3. Add 2s timeout									[V]
 
-int main() {
-	char* placeholderIpAddr = "62.219.186.7"; // placeholder for cmd line args
+int main(int argc, char* argv[])
+{
+	// Validate correct number of inputs
+	if (argc != 2) {
+		printf("[ERROR] Incorrect amount of arguments supplied\n Expected nsclient.exe <DNS server IP>.\n Exiting.\n");
+		exit(-1);
+	}
 
-	// 1. Get user input for IP of DNS server, default to 8.8.8.8 FROM COMMAND LINE!
-	// 2. User-logic-loop:
-	//		2.1 parse user inputs for domain names 
-	//		2.2 do conversion to DNS request format
-	//		2.3 send DNS request and recieve response
-	//		2.4 parse response and print
-	// 3. On user input 'quit', free memory and quit
+	// Get user's DNS server from argv[1] here and check validity.
+	char* dnsServerIP = argv[1];
 
-	// Request constraints:
-	// 1. UDP 53
-	// 2. Timeout 2s
+	if (ipValidate(dnsServerIP) == 0) {
+		printf("[ERROR] Bad format for the given IP address. Exiting.\n");
+		exit(-1);
+	}
 
-	// Definitions
-	char userText[USER_BUFFER_SIZE];
-	int messageId = 0xa123;
-	int receivedBytes;
+	// Print header once
+	printf("Enter a domain name below, or type 'quit' to exit.\n");
+	unsigned char userText[255];
+	struct sockaddr_in parsedResult;
 
-	dnsPacket* dnsMessage;
-	dnsPacket* dnsResponsePacket;
-
-	// Main loop: prompt user to interact
 	while (1) {
+		// Initialize new socket
+		initUDP("8.8.8.8", UDP_PORT);
+
+		// Deal with user
 		printf("nsclient> ");
 		scanf("%s", &userText);
+		// checkDomain();
 
 		// Check if user wants to quit
-		if (!strcmp(userText, "quit"))
+		if (!strcmp(userText, "quit")) {
 			exit(0);
+		}
 
-		// Create DNS packet
-		dnsMessage = createDnsPacket(userText, strlen(userText), &messageId);
+		// Parse response
+		struct hostent* dnsResponse = dnsQuery(userText);
+		parsedResult.sin_addr = *(struct in_addr*)dnsResponse->h_addr_list[0];
+		printf("%s \n", inet_ntoa(parsedResult.sin_addr));
 
-		// TODO: Get DNS server IP from argv
-		initUDP(placeholderIpAddr, 53);
-
-		// ...and send it
-		int sentBytes = sendUDP((char*)dnsMessage->head, dnsMessage->size);
-
-		// Listen for DNS result
-		
-		char* dnsResult = receiveUDP(&receivedBytes);
-		printf("\nReceived bytes: %d\n", receivedBytes);
-
-		// Parse the result (TODO)
+		// Close socket
+		closeUDPSocket();
 	}
+	return 0;
 }

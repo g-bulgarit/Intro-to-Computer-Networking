@@ -1,126 +1,215 @@
 #define _CRT_SECURE_NO_WARNINGS
-#include <stdlib.h>
-#include <string.h>
 #include "dnsInfra.h"
+#include "Networking.h"
 
+// Global parameter for incrementing the message ID for the DNS packets
+int globalMessageId = 0;
 
-void splitDomainName(char *domain, char* outputString)
+struct hostent* dnsQuery(unsigned char *domainName)
 {
-	// Convert domain name to DNS format
+	// Function to create a DNS packet according to the RFC specification and use it
+	// to query a DNS server and parse it's response.
 
-	const char delimeter = '.';
-	char* substring;
-	char* copiedDomainBuffer;
-	unsigned int outStrPosition = 0;
-	int strLength;
+	unsigned char buf[DNS_BUF_SIZE], *dnsDomainName, *readPtr;
+	int sizeSocket = 0;
+	int i, j, stoppingPtr;
 
-	copiedDomainBuffer = (char*)calloc((strlen(domain) + 1), 1); // Increase copied domain container size
-	strcpy(copiedDomainBuffer, domain);
+	struct hostent* dnsResponse = (struct hostent*)malloc(sizeof(struct hostent));
+	char **foundIpAddrList[2][MAX_DNS_REPLIES] = { 0 };
 
-	// Use str-token to split the string and append the size of each block to the start of each block
-	substring = strtok(copiedDomainBuffer, &delimeter);
-	while (substring != NULL)
+	resRecord dnsReponses[MAX_DNS_REPLIES];
+	dnsHeader *dns = NULL;
+	dnsQuestion *qinfo = NULL;
+
+	// Set the DNS structure to standard queries and fill known fields
+	dns = (dnsHeader*)&buf;
+	setDnsQueryParams(dns, &globalMessageId);
+
+	// Get pointer to the query portion and construct the query
+	dnsDomainName = (unsigned char*)&buf[sizeof(dnsHeader)];
+	domainToDnsFormat(dnsDomainName, domainName);
+	qinfo = (dnsQuestion*)&buf[sizeof(dnsHeader) + (strlen((const char*)dnsDomainName) + 1)];
+	qinfo->qtype = htons(1);
+	qinfo->qclass = htons(1);
+
+	// Send DNS packet to the specified DNS server
+	if (sendto(sendSocket, (char*)buf, sizeof(dnsHeader) + (strlen((const char*)dnsDomainName) + 1) + sizeof(dnsQuestion), 0, (struct sockaddr*)&netSocket, sizeof(netSocket)) == SOCKET_ERROR)
 	{
-		// Calculate size of substring and append it before the substring itself.
-		strLength = strlen(substring);
-		outputString[outStrPosition] = (char)strLength;
-		memcpy(&outputString[outStrPosition + 1], substring, strLength); // Append substring
-		outStrPosition += (strLength + 1);
-
-		// Keep splitting the string from where we stopped
-		substring = strtok(NULL, &delimeter);
+		printf("[ERROR] Failed to send.\nError Code: %d", WSAGetLastError());
+		exit(-1);
 	}
 
-	outputString[outStrPosition] = '\0';
-	free(copiedDomainBuffer);
-}
+	sizeSocket = sizeof(netSocket);
 
-int addDnsQueryToMsg(dnsPacket *dns, char *qdomain, unsigned int qdomainSize, unsigned int qtype, unsigned int qclass)
-{
-	// Take the DNS packet and:
-	//	1. Allocate space for the domain query
-	//  2. Reformat the domain in the format specified by the DNS protocol
-	//  3. Add it to the packet
-
-	dnsQuestion* qdBase;
-	unsigned int qdSize;
-	unsigned int qnameActualSize;
-	unsigned int qnamePreviousSize;
-
-	// find the size of this question block
-	qnameActualSize = qdomainSize;
-	qdSize = sizeof(dnsQuestion) + qnameActualSize;
-
-	// TODO: malloc check
-	qdBase = (dnsQuestion*)malloc(sizeof(dnsQuestion));
-
-	// Set query type and query class as given from outside
-	qdBase->qtype = htons(qtype);
-	qdBase->qclass = htons(qclass);
-
-	// Unpack previous value and push in new value
-	qnamePreviousSize = dns->size;
-	dns->size += qdSize;
-
-	// Add size to the header block to fit both itself and the query
-	dns->head = (dnsHeader*)realloc(dns->head, dns->size);
-	if (dns->head == NULL) {
-		// TODO: Handle failed malloc here
-		return -1;
+	// Receive DNS response
+	if (recvfrom(sendSocket, (char*)buf, DNS_BUF_SIZE, 0, (struct sockaddr*)&netSocket, &sizeSocket) == SOCKET_ERROR)
+	{
+		int errCode = WSAGetLastError();
+		if (errCode == 10060) {
+			printf("[ERROR] Request timed out after %d seconds - Error Code: %d", TIMEOUT_MILLISECONDS / 1000, errCode);
+			exit(-1);
+		}
+		else {
+			printf("[ERROR] Failed to receive.\nError Code: %d", errCode);
+			exit(-1);
+		}
 	}
 
-	// Set pointer to the query part of the packet
-	qdBase = (dnsQuestion *)((int)(dns->head) + sizeof(dnsHeader));
-	dns->qdBase = qdBase;
-	dns->qdSize += qdSize;
+	// Read received buffer into a DNS packet
+	dns = (dnsHeader*)buf;
 
-	// If the dns packet is already built, move everything forward to have space for the domain
-	memcpy((void *)((DWORD_PTR)(&qdBase->qtype) + (DWORD_PTR)(qnameActualSize)), &qdBase->qtype, (sizeof(qdBase->qtype) + sizeof(qdBase->qclass)));
+	readPtr = &buf[sizeof(dnsHeader) + (strlen((const char*)dnsDomainName) + 1) + sizeof(dnsQuestion)];
+	stoppingPtr = 0;
 
-	// split domain name to fit DNS protocal specification
-	splitDomainName(qdomain, qdBase->qname);
+	// Start going over all answers
+	for (i = 0; i < ntohs(dns->ans_count); i++)
+	{
+		// For each answer in the DNS response,
+		dnsReponses[i].name = dnsToDomainFormat(readPtr, buf, &stoppingPtr);	//Convert name to DNS packet format
+		readPtr += stoppingPtr;
 
-	return ++dns->head->qdcount;
+		// Add to resource
+		dnsReponses[i].resourceStruct = (resData*)(readPtr);
+		readPtr += sizeof(resData);
+
+		if (ntohs(dnsReponses[i].resourceStruct->type) == 1 && ntohs(dnsReponses[i].resourceStruct->_class) == 1) // Look at *responses* only
+		{
+			// Allocate room for the resource struct
+			dnsReponses[i].resourceData = (unsigned char*)malloc(ntohs(dnsReponses[i].resourceStruct->data_len));
+			for (j = 0; j < ntohs(dnsReponses[i].resourceStruct->data_len); j++)
+				dnsReponses[i].resourceData[j] = readPtr[j];
+
+			// Add null byte to terminate the reposnse string
+			dnsReponses[i].resourceData[ntohs(dnsReponses[i].resourceStruct->data_len)] = '\0';
+			readPtr += ntohs(dnsReponses[i].resourceStruct->data_len);
+		}
+		else // Skip
+		{
+			dnsReponses[i].resourceStruct = dnsToDomainFormat(readPtr, buf, &stoppingPtr);
+			readPtr += stoppingPtr;
+		}
+	}
+
+	// Construct a list of a IP addresses
+	int addrAmt = 0;
+	for (i = 0; i < ntohs(dns->ans_count); i++)
+	{
+		if (ntohs(dnsReponses[i].resourceStruct->type) == 1) // Look at *responses* only
+		{
+			long *p;
+			p = (long*)dnsReponses[i].resourceData;
+			foundIpAddrList[0][addrAmt] = p;
+			addrAmt++;
+		}
+	}
+
+#ifdef DEBUG
+	printf("[DEBUG] answers: %d\n", ntohs(dns->ans_count));
+	printf("[DEBUG] auth servers: %d\n", ntohs(dns->auth_count));
+#endif
+
+	// TODO: Check if we need to fill aliases and name here
+	// Fill the hostent struct
+	dnsResponse->h_name = NULL;
+	dnsResponse->h_aliases = NULL;
+	dnsResponse->h_addrtype = AF_INET;
+	dnsResponse->h_length = 4;
+	dnsResponse->h_addr_list = foundIpAddrList;
+	return dnsResponse;
 }
 
-void dnsHostToNetwork(dnsPacket *dns)
+void setDnsQueryParams(dnsHeader* dns, int* idCounter) {
+	// Set all required DNS header paramters, assuming we always want to query.
+
+	int currentId = (*idCounter)++;
+	dns->id = currentId;
+	dns->qr = 0;				// message type is query
+	dns->opcode = 0;			// normal query
+	dns->aa = 0;				// non authoritive
+	dns->tc = 0;				// full message
+	dns->rd = 1;				// use recursion
+	dns->ra = 0;				// not available
+	dns->z = 0;
+	dns->ad = 0;
+	dns->cd = 0;
+	dns->rcode = 0;
+	dns->q_count = htons(1);	// Always 1 query
+	dns->ans_count = 0;
+	dns->auth_count = 0;
+	dns->add_count = 0;
+}
+
+unsigned char* dnsToDomainFormat(unsigned char* reader, unsigned char* buffer, int* count)
 {
-	// Switch from host to network order
-	dns->head->id = htons(dns->head->id);
-	dns->head->flags = htons(dns->head->flags);
-	dns->head->qdcount = htons(dns->head->qdcount);
-	dns->head->ancount = htons(dns->head->ancount);
-	dns->head->arcount = htons(dns->head->arcount);
-	dns->head->nscount = htons(dns->head->nscount);
+	// Un-compress the DNS name format to a humean readable format
+	// from:	3www4test3com
+	// to:		www.test.com
+
+	unsigned char *domainName;
+	unsigned int p = 0, jumped = 0, offset;
+
+	// Looping variables:
+	int i, j;
+
+	*count = 1;
+
+	// Temporary domain container:
+	domainName = (unsigned char*)malloc(256);
+	domainName[0] = '\0';
+
+	while (*reader != 0) {
+		if (*reader >= 192) {
+			offset = (*reader) * 256 + *(reader + 1) - 0xC000;
+			reader = buffer + offset - 1;
+			jumped = 1;
+		}
+		else {
+			domainName[p++] = *reader;
+		}
+		reader++;
+
+		if (jumped == 0) *count = *count + 1; // Keep counting
+	}
+
+	domainName[p] = '\0'; // Close string
+
+	if (jumped == 1)
+	{
+		*count = *count + 1; //number of steps we actually moved forward in the packet
+	}
+
+	// This is the reverse of domainToDnsFormat - Convert to actual domain.
+	for (i = 0; i < (int)strlen((const char*)domainName); i++) {
+		p = domainName[i];
+		for (j = 0; j < (int)p; j++) {
+			domainName[i] = domainName[i + 1];
+			i = i + 1;
+		}
+		domainName[i] = '.';
+	}
+	domainName[i - 1] = '\0'; // Close string and return
+	return domainName;
 }
 
 
-dnsPacket* createDnsPacket(char* domainName, int domainLength)
-dnsPacket* createDnsPacket(char* domainName, int domainLength, int* messageId)
+void domainToDnsFormat(unsigned char* outQname, unsigned char* domain)
 {
-	// Build the actual packet
-	dnsPacket* dnsPack;
-	dnsHeader* dnsHead;
-	unsigned int headerSize = sizeof(dnsHeader);
+	// Convert domain name to the format specified in the RFC,
+	// namely:
+	// www.abcde.com -> 3www5abcde3com
 
-	dnsPack = (dnsPacket*)calloc(1, sizeof(dnsPacket));
-	dnsHead = (dnsHeader*)calloc(1, headerSize);
+	strcat((char*)domain, "."); // Housekeeping - need a dot in the end to make algo easy to write...
+	int previousStop = 0, i;
 
-	// Initially, the DNS packet size is just the header
-	dnsPack->head = dnsHead;
-	dnsPack->size = headerSize;
-
-	dnsPack->head->flags = 0x0100;  // Use RD flag (recursion desired)
-
-	// set the required header fields
-	dnsPack->head->id = *messageId;
-	(*messageId)++; // Increment the mesasge ID for next time.
-
-	// Add query
-	addDnsQueryToMsg(dnsPack, domainName, domainLength, 1, 1);
-
-	// Switch H2N order
-	dnsHostToNetwork(dnsPack);
-
-	return dnsPack;
+	for (i = 0; i < (int)strlen((char*)domain); i++) {
+		if (domain[i] == '.') {
+			*outQname++ = i - previousStop;
+			for (; previousStop < i; previousStop++) {
+				*outQname++ = domain[previousStop]; // Set character to number
+			}
+			previousStop++;
+		}
+	}
+	// Finish by closing the string
+	*outQname++ = '\0';
 }
