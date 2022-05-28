@@ -17,6 +17,7 @@ In order to send successful DNS requests, we must conform with the protocol defi
 To implement a DNS client of our own, we used a couple of sources for guidance:
 1. Obviously, the RFC that defines the DNS protocol.
 2. A (very comprehensive!) writeup over at [BinaryTides](https://www.binarytides.com/dns-query-code-in-c-with-winsock/), from which we took inspiration for the general structure of the code, and most notable **the struct for the DNS header** - as noted in `dnsInfra.h`, we had a problem with the struct resizing at compile time, and the code at BinaryTides had a solution to our problem.
+3. The documentation of the `winsock2` library functions over at [MSDN](https://docs.microsoft.com/en-us/windows/win32/api/winsock2/) helped immensly when we tried to piece together what to expect and how to use the windows socket functions.
 
 -----------------
 
@@ -51,6 +52,7 @@ In order to do so, we checked the following conditions, assuming that the given 
 
 These conditions apply to any valid IP and thus inputting a wrong IP get caught and the program terminates with an error message.
 
+-----------------
 
 ### **Timeout on `recvfrom`**
 This was the first time we had to implement a timeout mechanism on `recvfrom` in order to prevent infinite stalling over a request that will never return.
@@ -65,6 +67,14 @@ setsockopt(sendSocket,
 ```
 
 This worked well and was far easier than the `select()` option, and since we are only working with one socket, we could easily avoid using `select()` for the rest of the project.
+
+-----------------
+
+### **Debugging**
+We used the debugger to debug the code, but when it came to debug the actual network packet transmission, we used **Wireshark**.
+We could compare the packets sent by `gethostbyname` to the packets that we are sending, and more importantly - we could see what responses we were getting. 
+
+This information was invaluable in successfully getting the project to work.
 
 -----------------
 
