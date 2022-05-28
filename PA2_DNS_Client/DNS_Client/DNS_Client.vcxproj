@@ -22,10 +22,12 @@
     <ClCompile Include="dnsInfra.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="Networking.c" />
+    <ClCompile Include="validationUtils.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dnsInfra.h" />
     <ClInclude Include="Networking.h" />
+    <ClInclude Include="validationUtils.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

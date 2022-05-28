@@ -24,12 +24,18 @@
     <ClCompile Include="dnsInfra.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="validationUtils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Networking.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="dnsInfra.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="validationUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
