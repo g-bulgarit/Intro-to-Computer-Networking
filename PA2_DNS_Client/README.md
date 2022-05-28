@@ -11,6 +11,14 @@ Submitted by:
 The goal is to create a command-line-interface that will copy the functionality of the `nsclient` utility, bundled with windows.
 In order to send successful DNS requests, we must conform with the protocol defined in [RFC-1035](https://datatracker.ietf.org/doc/html/rfc1035).
 
+The general method of operation is as follows:
+1. Receive DNS server IP from the user (validate this IP)
+2. Open a socket to the specified IP with port `53`
+3. Take domain name from user (validate this name)
+4. Construct a DNS packet and send it to the DNS server
+5. Receive a response (or an error)
+6. Parse the response and display the IP address to the user.
+
 -----------------
 
 ## **Implementation**
@@ -75,6 +83,12 @@ We used the debugger to debug the code, but when it came to debug the actual net
 We could compare the packets sent by `gethostbyname` to the packets that we are sending, and more importantly - we could see what responses we were getting. 
 
 This information was invaluable in successfully getting the project to work.
+
+-----------------
+
+## **Known Bugs**
+1. When we don't get a reply from the server after 2 seconds, we get the error `[ERROR] Request timed out after 2 seconds - Error Code: 10060` as expected, but immediatly after we also get `[ERROR] NONEXISTENT domain.` because the DNS server does not return a valid reply. We decided that the bug was too minor to warrant a change :(
+
 
 -----------------
 
