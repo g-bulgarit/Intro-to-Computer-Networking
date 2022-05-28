@@ -130,9 +130,9 @@ typedef struct s_resRecord
 	unsigned char *resourceData;
 } resRecord;
 
-struct hostent* dnsQueryResult;
+int successFlag;
 
-int dnsQuery(unsigned char *host);
+struct hostent* dnsQuery(unsigned char *host);
 void domainToDnsFormat(unsigned char*, unsigned char*);
 unsigned char* dnsToDomainFormat(unsigned char*, unsigned char*, int*);
 void setDnsQueryParams(dnsHeader* dns, int* idCounter);

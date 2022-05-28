@@ -43,8 +43,11 @@ int main(int argc, char* argv[])
 			exit(0);
 		}
 
+		// Query the DNS server
+		struct hostent* dnsQueryResult = dnsQuery(userText);
+
 		// Parse response if successfull
-		if (dnsQuery(userText)) {
+		if (successFlag) {
 			parsedResult.sin_addr = *(struct in_addr*)dnsQueryResult->h_addr_list[0];
 			printf("%s \n", inet_ntoa(parsedResult.sin_addr));
 		}

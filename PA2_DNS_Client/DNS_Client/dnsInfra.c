@@ -5,15 +5,16 @@
 // Global parameter for incrementing the message ID for the DNS packets
 int globalMessageId = 0;
 
-int dnsQuery(unsigned char *domainName)
+struct hostent* dnsQuery(unsigned char *domainName)
 {
-	int successFlag = 1;
 	// Function to create a DNS packet according to the RFC specification and use it
 	// to query a DNS server and parse it's response.
-
 	unsigned char buf[DNS_BUF_SIZE], *dnsDomainName, *readPtr;
 	int sizeSocket = 0;
 	int i, j, stoppingPtr;
+
+	successFlag = 1;
+
 
 	struct hostent* dnsResponse = (struct hostent*)malloc(sizeof(struct hostent));
 	char **foundIpAddrList[2][MAX_DNS_REPLIES] = { 0 };
@@ -67,7 +68,6 @@ int dnsQuery(unsigned char *domainName)
 		printf("[ERROR] NONEXISTENT\n");
 		successFlag = 0;
 	}
-
 
 	if (successFlag == 1)
 	{
@@ -125,11 +125,8 @@ int dnsQuery(unsigned char *domainName)
 		dnsResponse->h_addrtype = AF_INET;
 		dnsResponse->h_length = 4;
 		dnsResponse->h_addr_list = foundIpAddrList;
-
-		// Set this as the retval
-		dnsQueryResult = dnsResponse;
 	}
-	return successFlag;
+	return dnsResponse;
 
 }
 
