@@ -6,14 +6,18 @@
 	that the reply will also be garbage.
 */
 
-#include "stdio.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+
+
 #include "validationUtils.h"
 
 
 int isNumber(char *str)
 {
+	// Check if a character is a number
 	while (*str) {
 		if (!isdigit(*str)) {
 			return 0; // Return false - not a number
@@ -66,4 +70,46 @@ int ipValidate(char *ip) // Check if the IP is valid
 	if (overallDots != 3) // If the number of dots are not 3, return false
 		return 0;
 	return 1;
+}
+
+
+int checkDomain(char* domain) {
+	// Check URL validity based on RFC https://www.rfc-editor.org/rfc/rfc3986#section-2
+	// Todos:
+	//	1. Check atleast 1 dot and no more than 1 dot in a row.
+	//	2. Check that the domain name is not longer than 255 characters - This is automatically true becuase of our
+	//	   input buffer size, which is 255
+
+
+	// https:// | http://
+	int retval = 1;
+	int stringLength = strlen(domain);
+
+	// Check if there is atleast one '.' or more than one dot in a row --------
+	int numDots = 0;
+	int currentSeenDot = 50;	// Magic numbers
+	int prevSeenDot = 100;
+	for (int i = 0; i < stringLength; i++)
+	{
+		if (domain[i] == '.') {
+			numDots++;
+			currentSeenDot = i;
+		}
+
+		if (currentSeenDot - prevSeenDot == 1) {
+			// If two dots are seen one after another - URL is invalid.
+			return 0;
+		}
+		prevSeenDot = currentSeenDot;
+	}
+
+	if (numDots < 1) {
+		retval = 0;
+	}
+	
+	// -------------------------------------------------------------------------
+
+
+	return retval;
+
 }

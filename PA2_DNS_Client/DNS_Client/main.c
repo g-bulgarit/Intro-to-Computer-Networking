@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 
 	// Print header once
 	printf("Enter a domain name below, or type 'quit' to exit.\n");
-	unsigned char userText[255];
+	unsigned char userText[MAX_DOMAIN_SECTION_LEGNTH];
 	struct sockaddr_in parsedResult;
 
 	while (1) {
@@ -36,7 +36,10 @@ int main(int argc, char* argv[])
 		// Deal with user
 		printf("nsclient> ");
 		scanf("%s", &userText);
-		// checkDomain(); // Do domain name validation here
+		if (checkDomain(userText) == 0) {
+			printf("[ERROR] BAD NAME.\nWrong format for the given domain. Exiting.\n");
+			exit(-1);
+		}
 
 		// Check if user wants to quit
 		if (!strcmp(userText, "quit")) {
