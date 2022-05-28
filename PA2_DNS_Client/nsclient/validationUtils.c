@@ -34,24 +34,26 @@ int ipValidate(char *ip) // Check if the IP is valid
 	// kill program if the IP address is invalid.
 
 	int num, dots = 0;
-	char* test = ip;
 	char *ptr;
 
 	if (ip == NULL) {
 		return 0; // Return false
 	}
 
+	char* strToTest = (char*)malloc(sizeof(char) * strlen(ip));
+	strcpy(strToTest, ip);
+
 	// Check amt of dots
-	int stringLength = strlen(ip);
+	int stringLength = strlen(strToTest);
 	int overallDots = 0;
 	for (int i = 0; i < stringLength; i++)
 	{
-		if (ip[i] == '.') {
+		if (strToTest[i] == '.') {
 			overallDots++;
 		}
 	}
 
-	ptr = strtok(test, "."); // Slice the IP by dots
+	ptr = strtok(strToTest, "."); // Slice the IP by dots
 	if (ptr == NULL) {
 		return 0; // Return false - there is no number after the dot
 	}

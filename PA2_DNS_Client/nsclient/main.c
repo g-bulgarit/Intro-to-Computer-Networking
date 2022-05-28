@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
 	while (1) {
 		int validDomain = 1;
 		// Initialize new socket
-		initUDP("8.8.8.8", UDP_PORT);
+		initUDP(dnsServerIP, UDP_PORT);
 
 		// Deal with user
 		printf("nsclient> ");
