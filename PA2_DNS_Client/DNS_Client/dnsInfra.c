@@ -17,13 +17,16 @@ struct hostent* dnsQuery(unsigned char *domainName)
 	unsigned char* dnsDomainName;
 	unsigned char* readPtr;
 
+	// Initialize flow variables:
 	int sizeSocket = 0;
-	int i, j, stoppingPtr;
-
+	int i;
+	int j;
+	int stoppingPtr;
 	successFlag = 1;
 
-	struct hostent* dnsResponse = (struct hostent*)malloc(sizeof(struct hostent));
 
+	// Initialize structs
+	struct hostent* dnsResponse = (struct hostent*)malloc(sizeof(struct hostent));
 	resRecord dnsReponses[MAX_DNS_REPLIES];
 	dnsHeader *dns = NULL;
 	dnsQuestion *qinfo = NULL;
@@ -73,7 +76,7 @@ struct hostent* dnsQuery(unsigned char *domainName)
 
 	// Check if we didnt get an answer:
 	if (ntohs(dns->ans_count) == 0) {
-		printf("[ERROR] NONEXISTENT\n");
+		printf("[ERROR] NONEXISTENT domain.\n");
 		successFlag = 0;
 	}
 
@@ -108,7 +111,7 @@ struct hostent* dnsQuery(unsigned char *domainName)
 			}
 		}
 
-		// Fetch the last IP address
+		// Fetch the last IP address and keep it for later, this will be part of our output
 		char* foundIp = "";
 		for (i = 0; i < ntohs(dns->ans_count); i++)
 		{
@@ -140,22 +143,22 @@ struct hostent* dnsQuery(unsigned char *domainName)
 void setDnsQueryParams(dnsHeader* dns, int* idCounter) {
 	// Set all required DNS header paramters, assuming we always want to query.
 
-	int currentId = (*idCounter)++;
-	dns->id = currentId;
-	dns->qr = 0;				// message type is query
-	dns->opcode = 0;			// normal query
-	dns->aa = 0;				// non authoritive
-	dns->tc = 0;				// full message
-	dns->rd = 1;				// use recursion
-	dns->ra = 0;				// not available
-	dns->z = 0;
-	dns->ad = 0;
-	dns->cd = 0;
-	dns->rcode = 0;
-	dns->q_count = htons(1);	// Always 1 query
-	dns->ans_count = 0;
-	dns->auth_count = 0;
-	dns->add_count = 0;
+	int currentId =			(*idCounter)++;
+	dns->id =				currentId;
+	dns->qr =				0;					// message type is query
+	dns->opcode =			0;					// normal query
+	dns->aa =				0;					// non authoritive
+	dns->tc =				0;					// full message
+	dns->rd =				1;					// use recursion
+	dns->ra =				0;					// not available
+	dns->z =				0;					// this does not do anything
+	dns->ad =				0;
+	dns->cd =				0;
+	dns->rcode =			0;
+	dns->q_count =			htons(1);			// Always 1: query
+	dns->ans_count =		0;
+	dns->auth_count =		0;
+	dns->add_count =		0;
 }
 
 unsigned char* dnsToDomainFormat(unsigned char* readPtr, unsigned char* buf, int* count)
@@ -178,6 +181,7 @@ unsigned char* dnsToDomainFormat(unsigned char* readPtr, unsigned char* buf, int
 	domainName = (unsigned char*)malloc(256);
 	domainName[0] = '\0';
 
+	// Decompress name
 	while (*readPtr != 0) {
 		if (*readPtr >= 192) {
 			offset = (*readPtr) * 256 + *(readPtr + 1) - DNS_OFFSET;
@@ -199,6 +203,7 @@ unsigned char* dnsToDomainFormat(unsigned char* readPtr, unsigned char* buf, int
 		*count = *count + 1; //number of steps we actually moved forward in the packet
 	}
 
+	// Now that the name is uncompressed, we can translate it back to human readable format -
 	// This is the reverse of domainToDnsFormat - Convert to actual domain.
 	for (i = 0; i < (int)strlen((const char*)domainName); i++) {
 		p = domainName[i];

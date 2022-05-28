@@ -55,10 +55,10 @@ int main(int argc, char* argv[])
 			dnsQueryResult = dnsQuery(userText);
 		}
 
-		// Parse response if successfull
+		// Parse response if successfull:
 		if (successFlag && validDomain) {
 			parsedResult.sin_addr = *(struct in_addr*)dnsQueryResult->h_addr_list;
-			printf("%s \n", inet_ntoa(parsedResult.sin_addr));
+			printf("%s\n", inet_ntoa(parsedResult.sin_addr));
 		}
 
 		// Close socket
