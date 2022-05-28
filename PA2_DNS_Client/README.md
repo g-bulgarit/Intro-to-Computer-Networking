@@ -11,10 +11,14 @@ Submitted by:
 The goal is to create a command-line-interface that will copy the functionality of the `nsclient` utility, bundled with windows.
 In order to send successful DNS requests, we must conform with the protocol defined in [RFC-1035](https://datatracker.ietf.org/doc/html/rfc1035).
 
+-----------------
+
 ## **Implementation**
 To implement a DNS client of our own, we used a couple of sources for guidance:
 1. Obviously, the RFC that defines the DNS protocol.
 2. A (very comprehensive!) writeup over at [BinaryTides](https://www.binarytides.com/dns-query-code-in-c-with-winsock/), from which we took inspiration for the general structure of the code, and most notable **the struct for the DNS header** - as noted in `dnsInfra.h`, we had a problem with the struct resizing at compile time, and the code at BinaryTides had a solution to our problem.
+
+-----------------
 
 ## **Challanges**
 ### **Constructing, Parsing and Deconstructing a DNS packet**
@@ -25,8 +29,11 @@ At first we created the `dnsHeader` struct according to the specification in the
 
 Eventually we pulled through and the program decodes the DNS response packet to fetch the address of the requested domain.
 
+-----------------
+
 ### **User input validation**
 >These sections are implemented in `validationUtils.c`.
+
 #### **Domain (URL) Validation (and the choice of not using Regex)**
 In order to comply with the "runtime example" given in the instructions for `PA2`, we had to come up with a mechanism to determine if a given domain name is valid so we could return a `BADNAME` error in case the name is... bad.
 To check the URL for validity, we came up with the following tests:
@@ -50,11 +57,16 @@ This was the first time we had to implement a timeout mechanism on `recvfrom` in
 
 We saw numerous approaches online, some using `select()`, but we decided to go with the less invasive option of setting the timeout property of the socket itself. We did so using the `setsockopt` function like so, with `timeoutMilliseconds = 2000`:
 ```
-setsockopt(sendSocket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeoutMilliseconds, sizeof(timeoutMilliseconds))
+setsockopt(sendSocket, 
+           SOL_SOCKET, 
+           SO_RCVTIMEO, 
+           (const char *)&timeoutMilliseconds, 
+           sizeof(timeoutMilliseconds))
 ```
 
 This worked well and was far easier than the `select()` option, and since we are only working with one socket, we could easily avoid using `select()` for the rest of the project.
 
+-----------------
 
 ## **How to run the code**
 Run the code with the address of the DNS server as a command line argument, like so:
