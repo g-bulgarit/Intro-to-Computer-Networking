@@ -8,6 +8,8 @@
 #include "Networking.h"
 #include "validationUtils.h"
 
+struct hostent* dnsQueryResult;
+
 int main(int argc, char* argv[])
 {
 	// Validate correct number of inputs
@@ -30,6 +32,7 @@ int main(int argc, char* argv[])
 	struct sockaddr_in parsedResult;
 
 	while (1) {
+		int validDomain = 1;
 		// Initialize new socket
 		initUDP("8.8.8.8", UDP_PORT);
 
@@ -43,16 +46,18 @@ int main(int argc, char* argv[])
 
 		// Check the domain - if the domain is invalid, quit
 		if (checkDomain(userText) == 0) {
-			printf("[ERROR] BAD NAME.\nWrong format for the given domain. Exiting.\n");
-			exit(-1);
+			printf("[ERROR] BAD NAME.\nWrong format for the given domain.\n");
+			validDomain = 0;
 		}
 
 		// Query the DNS server
-		struct hostent* dnsQueryResult = dnsQuery(userText);
+		if (validDomain) {
+			dnsQueryResult = dnsQuery(userText);
+		}
 
 		// Parse response if successfull
-		if (successFlag) {
-			parsedResult.sin_addr = *(struct in_addr*)dnsQueryResult->h_addr_list[0];
+		if (successFlag && validDomain) {
+			parsedResult.sin_addr = *(struct in_addr*)dnsQueryResult->h_addr_list;
 			printf("%s \n", inet_ntoa(parsedResult.sin_addr));
 		}
 
