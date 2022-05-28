@@ -36,14 +36,15 @@ int main(int argc, char* argv[])
 		// Deal with user
 		printf("nsclient> ");
 		scanf("%s", &userText);
-		if (checkDomain(userText) == 0) {
-			printf("[ERROR] BAD NAME.\nWrong format for the given domain. Exiting.\n");
-			exit(-1);
-		}
-
 		// Check if user wants to quit
 		if (!strcmp(userText, "quit")) {
 			exit(0);
+		}
+
+		// Check the domain - if the domain is invalid, quit
+		if (checkDomain(userText) == 0) {
+			printf("[ERROR] BAD NAME.\nWrong format for the given domain. Exiting.\n");
+			exit(-1);
 		}
 
 		// Query the DNS server
