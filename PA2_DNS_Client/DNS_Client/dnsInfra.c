@@ -13,7 +13,10 @@ struct hostent* dnsQuery(unsigned char *domainName)
 {
 	// Function to create a DNS packet according to the RFC specification and use it
 	// to query a DNS server and parse it's response.
-	unsigned char buf[DNS_BUF_SIZE], *dnsDomainName, *readPtr;
+	unsigned char buf[DNS_BUF_SIZE];
+	unsigned char* dnsDomainName;
+	unsigned char* readPtr;
+
 	int sizeSocket = 0;
 	int i, j, stoppingPtr;
 
