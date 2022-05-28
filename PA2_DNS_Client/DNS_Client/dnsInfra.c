@@ -2,6 +2,10 @@
 #include "dnsInfra.h"
 #include "Networking.h"
 
+/*
+	Full infrastructure for constructing and deconstructing a DNS packet.
+*/
+
 // Global parameter for incrementing the message ID for the DNS packets
 int globalMessageId = 0;
 
@@ -14,7 +18,6 @@ struct hostent* dnsQuery(unsigned char *domainName)
 	int i, j, stoppingPtr;
 
 	successFlag = 1;
-
 
 	struct hostent* dnsResponse = (struct hostent*)malloc(sizeof(struct hostent));
 	char **foundIpAddrList[2][MAX_DNS_REPLIES] = { 0 };
@@ -43,15 +46,17 @@ struct hostent* dnsQuery(unsigned char *domainName)
 
 	sizeSocket = sizeof(netSocket);
 
-	// Receive DNS response
+	// Receive DNS response - throw errors for timeout and other possible stuff
 	if (recvfrom(sendSocket, (char*)buf, DNS_BUF_SIZE, 0, (struct sockaddr*)&netSocket, &sizeSocket) == SOCKET_ERROR)
 	{
 		int errCode = WSAGetLastError();
 		if (errCode == 10060) {
+			// Throw specific error for timeout
 			printf("[ERROR] Request timed out after %d seconds - Error Code: %d\n", TIMEOUT_MILLISECONDS / 1000, errCode);
 			successFlag = 0;
 		}
 		else {
+			// Throw general error
 			printf("[ERROR] Failed to receive.\nError Code: %d\n", errCode);
 			successFlag = 0;
 		}
@@ -60,6 +65,7 @@ struct hostent* dnsQuery(unsigned char *domainName)
 	// Read received buffer into a DNS packet
 	dns = (dnsHeader*)buf;
 
+	// Skip to the replies from the DNS server with a pointer
 	readPtr = &buf[sizeof(dnsHeader) + (strlen((const char*)dnsDomainName) + 1) + sizeof(dnsQuestion)];
 	stoppingPtr = 0;
 
@@ -106,9 +112,9 @@ struct hostent* dnsQuery(unsigned char *domainName)
 		{
 			if (ntohs(dnsReponses[i].resourceStruct->type) == 1) // Look at *responses* only
 			{
-				long *p;
-				p = (long*)dnsReponses[i].resourceData;
-				foundIpAddrList[0][addrAmt] = p;
+				long *ipAddrPtr;
+				ipAddrPtr = (long*)dnsReponses[i].resourceData;
+				foundIpAddrList[0][addrAmt] = ipAddrPtr;
 				addrAmt++;
 			}
 		}

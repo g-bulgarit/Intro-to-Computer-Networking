@@ -1,12 +1,13 @@
 #include "dnsInfra.h"
 #include "Networking.h"
 
+/*
+	Functions to interface with the network - construct and destroy sockets.
+*/
+
 // Constants and general use variables
-
 int wsaInitialized = 0;
-
 int netSocketSize = sizeof(netSocket);
-
 char recvBuffer[BUFFER_SIZE];
 unsigned int recvBytes = 0;
 

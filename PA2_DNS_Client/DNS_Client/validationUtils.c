@@ -1,5 +1,11 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+/*
+	Functions to validate user input for correctness before constructing the DNS packets.
+	If the user inputs garbage, we don't want to send this garbage out because we know
+	that the reply will also be garbage.
+*/
+
 #include "stdio.h"
 #include <stdlib.h>
 #include <string.h>
