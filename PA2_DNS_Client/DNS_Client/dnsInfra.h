@@ -1,8 +1,7 @@
 #pragma once
-//DNS Query Program
 #define _CRT_SECURE_NO_WARNINGS
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
-//Header Files
+
 #include "winsock2.h"
 #include "windows.h"
 #include "stdio.h"
@@ -22,10 +21,16 @@
 		the struct by the correct order, the compiler optimization would make
 		it not work out and the size not would be correct, causing the DNS server
 		to misunderstand our request.
-		The order used below is what we found online - it works, but it's not pretty.
+
+		We tried to force the compiler to pack everything in byte-sizes of 1, which
+		would make the memory access less efficient but cleaner, and would result
+		in correctly sized structs (at the expense of speed), but it didn't work either.
+		We kept the compiler instructions anyway.
+
+		The order used below is what we found online! - it works, but it's not pretty.
 */
 
-//DNS header structure
+
 typedef struct s_dnsHeader
 {
 	/*	DNS header packet structure
@@ -65,7 +70,7 @@ typedef struct s_dnsHeader
 	unsigned short add_count;	// amount of resource records
 } dnsHeader;
 
-//Constant sized fields of query structure
+
 typedef struct s_dnsQuestion
 {
 	/*	Struct for the DNS question. QNAME is omitted
@@ -87,7 +92,7 @@ typedef struct s_dnsQuestion
 	unsigned short qclass;
 } dnsQuestion;
 
-//Constant sized fields of the resource record structure
+
 #pragma pack(push, 1)
 typedef struct s_resData
 {
@@ -122,7 +127,7 @@ typedef struct s_resData
 } resData;
 #pragma pack(pop)
 
-//Pointers to resource record contents
+
 typedef struct s_resRecord
 {
 	unsigned char *name;

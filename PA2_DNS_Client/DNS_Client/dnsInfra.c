@@ -23,7 +23,6 @@ struct hostent* dnsQuery(unsigned char *domainName)
 	successFlag = 1;
 
 	struct hostent* dnsResponse = (struct hostent*)malloc(sizeof(struct hostent));
-	char **foundIpAddrList[2][MAX_DNS_REPLIES] = { 0 };
 
 	resRecord dnsReponses[MAX_DNS_REPLIES];
 	dnsHeader *dns = NULL;
@@ -109,16 +108,13 @@ struct hostent* dnsQuery(unsigned char *domainName)
 			}
 		}
 
-		// Construct a list of a IP addresses
-		int addrAmt = 0;
+		// Fetch the last IP address
+		char* foundIp = "";
 		for (i = 0; i < ntohs(dns->ans_count); i++)
 		{
 			if (ntohs(dnsReponses[i].resourceStruct->type) == 1) // Look at *responses* only
 			{
-				long *ipAddrPtr;
-				ipAddrPtr = (long*)dnsReponses[i].resourceData;
-				foundIpAddrList[0][addrAmt] = ipAddrPtr;
-				addrAmt++;
+				foundIp = (char*)dnsReponses[i].resourceData;
 			}
 		}
 
@@ -135,7 +131,7 @@ struct hostent* dnsQuery(unsigned char *domainName)
 		dnsResponse->h_aliases = domainName;
 		dnsResponse->h_addrtype = AF_INET;
 		dnsResponse->h_length = 4;
-		dnsResponse->h_addr_list = foundIpAddrList;
+		dnsResponse->h_addr_list = foundIp;
 	}
 	return dnsResponse;
 
