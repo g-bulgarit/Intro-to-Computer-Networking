@@ -10,6 +10,7 @@
 
 #define MAX_DNS_REPLIES 20
 #define DNS_BUF_SIZE 2048
+#define DNS_OFFSET 0xC000
 
 //#define DEBUG
 
@@ -137,7 +138,9 @@ typedef struct s_resRecord
 
 int successFlag;
 
+// Functions
 struct hostent* dnsQuery(unsigned char *host);
-void domainToDnsFormat(unsigned char*, unsigned char*);
-unsigned char* dnsToDomainFormat(unsigned char*, unsigned char*, int*);
+void domainToDnsFormat(unsigned char* outQname, unsigned char* domain);
+unsigned char* dnsToDomainFormat(unsigned char* readPtr, unsigned char* buf, int* count);
 void setDnsQueryParams(dnsHeader* dns, int* idCounter);
+

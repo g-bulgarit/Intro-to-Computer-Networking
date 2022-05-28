@@ -158,14 +158,16 @@ void setDnsQueryParams(dnsHeader* dns, int* idCounter) {
 	dns->add_count = 0;
 }
 
-unsigned char* dnsToDomainFormat(unsigned char* reader, unsigned char* buffer, int* count)
+unsigned char* dnsToDomainFormat(unsigned char* readPtr, unsigned char* buf, int* count)
 {
 	// Un-compress the DNS name format to a humean readable format
 	// from:	3www4test3com
 	// to:		www.test.com
 
 	unsigned char *domainName;
-	unsigned int p = 0, jumped = 0, offset;
+	unsigned int p = 0;
+	unsigned int hasJumped = 0;
+	unsigned int offset;
 
 	// Looping variables:
 	int i, j;
@@ -176,23 +178,23 @@ unsigned char* dnsToDomainFormat(unsigned char* reader, unsigned char* buffer, i
 	domainName = (unsigned char*)malloc(256);
 	domainName[0] = '\0';
 
-	while (*reader != 0) {
-		if (*reader >= 192) {
-			offset = (*reader) * 256 + *(reader + 1) - 0xC000;
-			reader = buffer + offset - 1;
-			jumped = 1;
+	while (*readPtr != 0) {
+		if (*readPtr >= 192) {
+			offset = (*readPtr) * 256 + *(readPtr + 1) - DNS_OFFSET;
+			readPtr = buf + offset - 1;
+			hasJumped = 1;
 		}
 		else {
-			domainName[p++] = *reader;
+			domainName[p++] = *readPtr;
 		}
-		reader++;
+		readPtr++;
 
-		if (jumped == 0) *count = *count + 1; // Keep counting
+		if (hasJumped == 0) *count = *count + 1; // Keep counting
 	}
 
 	domainName[p] = '\0'; // Close string
 
-	if (jumped == 1)
+	if (hasJumped == 1)
 	{
 		*count = *count + 1; //number of steps we actually moved forward in the packet
 	}
