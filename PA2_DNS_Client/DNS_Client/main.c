@@ -8,16 +8,11 @@
 #include "Networking.h"
 #include "validationUtils.h"
 
-//	Todos:
-//		1. Check IP address validity for the DNS server		[V]
-//		2. Check domain name validity for ther user input	[V]
-//		3. Add 2s timeout									[V]
-
 int main(int argc, char* argv[])
 {
 	// Validate correct number of inputs
 	if (argc != 2) {
-		printf("[ERROR] Incorrect amount of arguments supplied\n Expected nsclient.exe <DNS server IP>.\n Exiting.\n");
+		printf("[ERROR] BAD ARGS.\nIncorrect amount of arguments supplied\n Expected nsclient.exe <DNS server IP>. Exiting.\n");
 		exit(-1);
 	}
 
@@ -25,7 +20,7 @@ int main(int argc, char* argv[])
 	char* dnsServerIP = argv[1];
 
 	if (ipValidate(dnsServerIP) == 0) {
-		printf("[ERROR] Bad format for the given IP address. Exiting.\n");
+		printf("[ERROR] BAD NAME.\nWrong format for the given IP address. Exiting.\n");
 		exit(-1);
 	}
 
@@ -41,7 +36,7 @@ int main(int argc, char* argv[])
 		// Deal with user
 		printf("nsclient> ");
 		scanf("%s", &userText);
-		// checkDomain();
+		// checkDomain(); // Do domain name validation here
 
 		// Check if user wants to quit
 		if (!strcmp(userText, "quit")) {
