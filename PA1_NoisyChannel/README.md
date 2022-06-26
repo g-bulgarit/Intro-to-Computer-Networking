@@ -3,8 +3,8 @@ Grade: 100 :)
 _______________
 # Programming Assignment 1: **Noisy Channel**
 Submitted by:
-* Alon Budker - id
-* Itay Zilka - id
+* A
+* I
 
 Our repository on github: [repository link](https://github.com/g-bulgarit/Intro-to-Computer-Networking/tree/main/PA1_NoisyChannel).
 
